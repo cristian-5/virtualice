@@ -7,7 +7,7 @@
 template <typename TYP>
 struct arr {
 	TYP * data = nullptr;
-	u64 count = 0;
+	siz count = 0;
 };
 
 #endif
