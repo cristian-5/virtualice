@@ -6,7 +6,7 @@
 #include "../tools/arr.hpp"
 #include "../tools/stk.hpp"
 
-enum op : u8 {
+enum op: u8 {
 	_halt,
 	_rest,
 	_push_b,
@@ -72,12 +72,43 @@ enum op : u8 {
 	_jump_l,
 };
 
-union val {
-	u64 i;
-	f64 f;
-};
+union val { u64 i; f64 f; };
+
+#define Q_MASK 0xFFFFFFFFFFFFFFFFull
+#define D_MASK 0x00000000FFFFFFFFull
+#define W_MASK 0x000000000000FFFFull
+#define B_MASK 0x00000000000000FFull
+
+#define V_CAST(V, T) { .i = V.i & T##_MASK }
 
 class vm {
+
+	private:
+
+	// ========= MICRO OPTIMISATIONS =========
+	// Equivalent to: "mov reg, dword ptr [p]"
+	// where 'reg' is the right register size,
+	// the compiler will always remove N_MASK.
+
+	[[gnu::always_inline]]
+	inline static val getQ(void * p) {
+		return { .i = * static_cast<u64 *>(p) };
+	}
+
+	[[gnu::always_inline]]
+	inline static val getD(void * p) {
+		return { .i = (* static_cast<u32 *>(p)) & D_MASK };
+	}
+
+	[[gnu::always_inline]]
+	inline static val getW(void * p) {
+		return { .i = (* static_cast<u16 *>(p)) & W_MASK };
+	}
+
+	[[gnu::always_inline]]
+	inline static val getB(void * p) {
+		return { .i = (* static_cast<u8 *>(p)) & B_MASK };
+	}
 
 	public:
 
@@ -91,26 +122,76 @@ class vm {
 	!*/
 	
 	void run(arr<u8> code) {
-		siz i = 0;
+		u8 * i = code.data;
 		stk<val> stack;
-		while(true) {
-			switch(code.data[i]) {
+		val a, b;
+		while (true) {
+			switch (* i) {
 				case op::_halt: return;
 				case op::_rest: break;
-				case op::_push_b: stack.push({code.data[++i]}); break;
-				case op::_add_i:
-					stack.push({stack.pop().i + stack.pop().i});
-					break;
-				case op::_add_f:
-					break;
-
-
-
+				case op::_push_b: stack.push(getB(++i)); break;
+				case op::_push_w: stack.push(getW(++i)); break;
+				case op::_push_d: stack.push(getD(++i)); break;
+				case op::_push_q: stack.push(getQ(++i)); break;
+				case op::_push_z: stack.push({ .i = 0ull }); break;
+				case op::_push_o: stack.push({ .i = 1ull }); break;
+				case    op::_pop: stack.decrease(); break;
+				case  op::_pop_n: stack.decrease(getQ(++i).i); break;
+				case    op::_top: stack.push(stack.top()); break;
+				case op::_cast_b: stack.push(V_CAST(stack.pop(), B));
+				case op::_cast_w: stack.push(V_CAST(stack.pop(), W));
+				case op::_cast_d: stack.push(V_CAST(stack.pop(), D));
+				case op::_cast_q: stack.push(V_CAST(stack.pop(), Q));
+				case  op::_add_i:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = a.i + b.i });
+				break;
+				case  op::_add_f:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .f = a.f + b.f });
+				break;
+				case  op::_sub_i:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = a.i - b.i });
+				break;
+				case  op::_sub_f:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .f = a.f - b.f });
+				break;
+				case  op::_mul_i:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = a.i * b.i });
+				break;
+				case  op::_mul_f:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .f = a.f * b.f });
+				break;
+				case  op::_div_i:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = a.i / b.i });
+				break;
+				case  op::_div_f:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .f = a.f / b.f });
+				break;
+				case  op::_mod_i:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = a.i % b.i });
+				break;
+				case  op::_mod_f:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .f = fmod(a.f, b.f) });
+				break;
 			}
-			i++;
+			++i;
 		}
 	}
 
 };
+
+#undef Q_MASK
+#undef D_MASK
+#undef W_MASK
+#undef B_MASK
 
 #endif
