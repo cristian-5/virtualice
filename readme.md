@@ -34,10 +34,14 @@ The instruction set is
 	div.[i|f]
 	mod.[i|f]
 
+	inc.[i|f]
+	dec.[i|f]
+
 ; bitwise: (l = left, r = right)
 
-	xand
+	xand | nor
 	xor
+	nand
 	and
 	or
 	not

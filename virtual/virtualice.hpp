@@ -32,13 +32,17 @@ enum op: u8 {
 	_div_f,
 	_mod_i,
 	_mod_f,
+	_inc_i,
+	_inc_f,
+	_dec_i,
+	_dec_f,
 	_xand,
 	_xor,
 	_and,
 	_or,
 	_not,
 	_inv,
-	_negate,
+	_neg,
 	_shift_l,
 	_shift_r,
 	_rotate_l,
@@ -182,6 +186,22 @@ class vm {
 					b = stack.pop(); a = stack.pop();
 					stack.push({ .f = fmod(a.f, b.f) });
 				break;
+				case  op::_inc_i:
+					a = stack.pop();
+					stack.push({ .i = a.i + 1 });
+				break;
+				case  op::_inc_f:
+					a = stack.pop();
+					stack.push({ .f = a.f + 1 });
+				break;
+				case  op::_dec_i:
+					a = stack.pop();
+					stack.push({ .i = a.i - 1 });
+				break;
+				case  op::_dec_f:
+					a = stack.pop();
+					stack.push({ .f = a.f - 1 });
+				break;
 				case  op::_xand:
 					b = stack.pop(); a = stack.pop();
 					stack.push({ .i = ~ (a.i ^ b.i) });
@@ -206,7 +226,7 @@ class vm {
 					a = stack.pop();
 					stack.push({ .i = ~ a.i });
 				break;
-				case  op::_negate:
+				case  op::_neg:
 					a = stack.pop();
 					stack.push({ .i = (~ a.i) + 1});
 				break;
