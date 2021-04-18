@@ -37,6 +37,7 @@ enum op: u8 {
 	_and,
 	_or,
 	_not,
+	_inv,
 	_negate,
 	_shift_l,
 	_shift_r,
@@ -58,7 +59,6 @@ enum op: u8 {
 	_wait_t,
 	_wait_a,
 	_wait_s,
-	_sleep,
 	_throw,
 	_catch,
 	_jump,
@@ -181,6 +181,34 @@ class vm {
 				case  op::_mod_f:
 					b = stack.pop(); a = stack.pop();
 					stack.push({ .f = fmod(a.f, b.f) });
+				break;
+				case  op::_xand:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = ~ (a.i ^ b.i) });
+				break;
+				case  op::_xor:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = (a.i ^ b.i) });
+				break;
+				case  op::_and:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = (a.i & b.i) });
+				break;
+				case  op::_or:
+					b = stack.pop(); a = stack.pop();
+					stack.push({ .i = (a.i | b.i) });
+				break;
+				case  op::_not:
+					a = stack.pop();
+					stack.push({ .i = ! a.i });
+				break;
+				case  op::_inv:
+					a = stack.pop();
+					stack.push({ .i = ~ a.i });
+				break;
+				case  op::_negate:
+					a = stack.pop();
+					stack.push({ .i = (~ a.i) + 1});
 				break;
 			}
 			++i;

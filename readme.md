@@ -41,6 +41,7 @@ The instruction set is
 	and
 	or
 	not
+	inv
 	negate
 
 	shift.[l|r]    [number]
