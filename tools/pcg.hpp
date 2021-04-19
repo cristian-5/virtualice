@@ -4,7 +4,7 @@
 
 #include "ice.hpp"
 
-// PCG Based on Doctor Melissa E. O'Neill paper.
+// PCG Based on Professor's Melissa E. O'Neill research.
 
 static u32 pcg32() {
 	static u64 state, inc;
