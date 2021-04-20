@@ -25,4 +25,16 @@ static_assert(sizeof(chr) == 1, "Please adjust the (chr) type alias!");
 static_assert(sizeof(f32) == 4, "Please adjust the (f32) type alias!");
 static_assert(sizeof(f64) == 8, "Please adjust the (f64) type alias!");
 
+template <typename TYP>
+static constexpr TYP rotateL(TYP v, u8 n = 1) {
+	static_assert(std::is_unsigned<TYP>::val);
+	return (v << n) | (v >> (sizeof(TYP) * 8 - n));
+}
+
+template <typename TYP>
+static constexpr TYP rotateR(TYP v, u8 n = 1) {
+	static_assert(std::is_unsigned<TYP>::val);
+	return (v >> n) | (v << (sizeof(TYP) * 8 - 1));
+}
+
 #endif

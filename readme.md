@@ -34,18 +34,16 @@ The instruction set is
 	div.[i|f]
 	mod.[i|f]
 
-	inc.[i|f]
-	dec.[i|f]
+	increment.[i|f]
+	decrement.[i|f]
 
 ; bitwise: (l = left, r = right)
 
-	xand | nor
-	xor
-	nand
 	and
 	or
 	not
-	inv
+	xor
+	invert
 	negate
 
 	shift.[l|r]    [number]

@@ -16,24 +16,13 @@
 #define POP_AB a = stack.pop(); b = stack.pop();
 
 [[gnu::always_inline]]
-val vm::getQ(void * p) {
-	return { .i = * ((u64 *)p) };
-}
-
+u64 vm::getQ(void * p) { return (* ((u64 *)p)); }
 [[gnu::always_inline]]
-val vm::getD(void * p) {
-	return { .i = (* ((u32 *)p)) & D_MASK };
-}
-
+u32 vm::getD(void * p) { return (* ((u32 *)p)) & D_MASK; }
 [[gnu::always_inline]]
-inline static val getW(void * p) {
-	return { .i = (* ((u16 *)p)) & W_MASK };
-}
-
+u16 vm::getW(void * p) { return (* ((u16 *)p)) & W_MASK; }
 [[gnu::always_inline]]
-inline static val getB(void * p) {
-	return { .i = (* ((u8 *)p)) & B_MASK };
-}
+u8  vm::getB(void * p) { return (* ((u8  *)p)) & B_MASK; }
 
 void vm::run(arr<u8> code) {
 	u8 * i = code.data;
@@ -41,42 +30,45 @@ void vm::run(arr<u8> code) {
 	val a, b;
 	while (true) {
 		switch (* i) {
-			case op::_halt: return;
-			case op::_rest: break;
-			case op::_push_b: stack.push(getB(++i)); break;
-			case op::_push_w: stack.push(getW(++i)); break;
-			case op::_push_d: stack.push(getD(++i)); break;
-			case op::_push_q: stack.push(getQ(++i)); break;
-			case op::_push_z: stack.push({ .i = 0ull }); break;
-			case op::_push_o: stack.push({ .i = 1ull }); break;
-			case    op::_pop: stack.decrease(); break;
-			case  op::_pop_n: stack.decrease(getQ(++i).i); break;
-			case    op::_top: stack.push(stack.top()); break;
-			case op::_cast_b: stack.push(V_CAST(stack.pop(), B));
-			case op::_cast_w: stack.push(V_CAST(stack.pop(), W));
-			case op::_cast_d: stack.push(V_CAST(stack.pop(), D));
-			case op::_cast_q: stack.push(V_CAST(stack.pop(), Q));
-			case  op::_add_i: POP_BA stack.push({ .i = a.i + b.i }); break;
-			case  op::_add_f: POP_BA stack.push({ .f = a.f + b.f }); break;
-			case  op::_sub_i: POP_BA stack.push({ .i = a.i - b.i }); break;
-			case  op::_sub_f: POP_BA stack.push({ .f = a.f - b.f }); break;
-			case  op::_mul_i: POP_BA stack.push({ .i = a.i * b.i }); break;
-			case  op::_mul_f: POP_BA stack.push({ .f = a.f * b.f }); break;
-			case  op::_div_i: POP_BA stack.push({ .i = a.i / b.i }); break;
-			case  op::_div_f: POP_BA stack.push({ .f = a.f / b.f }); break;
-			case  op::_mod_i: POP_BA stack.push({ .i = a.i % b.i }); break;
-			case  op::_mod_f: POP_BA stack.push({ .f = fmod(a.f, b.f) }); break;
-			case  op::_inc_i: POP_A  stack.push({ .i = a.i + 1 }); break;
-			case  op::_inc_f: POP_A  stack.push({ .f = a.f + 1 }); break;
-			case  op::_dec_i: POP_A  stack.push({ .i = a.i - 1 }); break;
-			case  op::_dec_f: POP_A  stack.push({ .f = a.f - 1 }); break;
-			case   op::_xand: POP_BA stack.push({ .i = ~ (a.i ^ b.i) }); break;
-			case    op::_xor: POP_BA stack.push({ .i = (a.i ^ b.i) }); break;
-			case    op::_and: POP_BA stack.push({ .i = (a.i & b.i) }); break;
-			case     op::_or: POP_BA stack.push({ .i = (a.i | b.i) }); break;
-			case    op::_not: POP_A  stack.push({ .i = ! a.i }); break;
-			case    op::_inv: POP_A  stack.push({ .i = ~ a.i }); break;
-			case    op::_neg: POP_A  stack.push({ .i = (~ a.i) + 1}); break;
+			case op::halt<>: return;
+			case op::rest<>: break;
+			case op::push<typ::b>: stack.push({ .i = getB(++i) }); break;
+			case op::push<typ::w>: stack.push({ .i = getW(++i) }); break;
+			case op::push<typ::d>: stack.push({ .i = getD(++i) }); break;
+			case op::push<typ::q>: stack.push({ .i = getQ(++i) }); break;
+			case op::push<typ::z>: stack.push({ .i = 0ull }); break;
+			case op::push<typ::o>: stack.push({ .i = 1ull }); break;
+			case        op::pop<>: stack.decrease(); break;
+			case  op::pop<typ::n>: stack.decrease(getQ(++i)); break;
+			case        op::top<>: stack.push(stack.top()); break;
+			case op::cast<typ::b>: stack.push(V_CAST(stack.pop(), B));
+			case op::cast<typ::w>: stack.push(V_CAST(stack.pop(), W));
+			case op::cast<typ::d>: stack.push(V_CAST(stack.pop(), D));
+			case op::cast<typ::q>: stack.push(V_CAST(stack.pop(), Q));
+			case  op::add<typ::i>: POP_BA stack.push({ .i = a.i + b.i }); break;
+			case  op::add<typ::f>: POP_BA stack.push({ .f = a.f + b.f }); break;
+			case  op::sub<typ::i>: POP_BA stack.push({ .i = a.i - b.i }); break;
+			case  op::sub<typ::f>: POP_BA stack.push({ .f = a.f - b.f }); break;
+			case  op::mul<typ::i>: POP_BA stack.push({ .i = a.i * b.i }); break;
+			case  op::mul<typ::f>: POP_BA stack.push({ .f = a.f * b.f }); break;
+			case  op::div<typ::i>: POP_BA stack.push({ .i = a.i / b.i }); break;
+			case  op::div<typ::f>: POP_BA stack.push({ .f = a.f / b.f }); break;
+			case  op::mod<typ::i>: POP_BA stack.push({ .i = a.i % b.i }); break;
+			case  op::mod<typ::f>: POP_BA stack.push({ .f = fmod(a.f, b.f) }); break;
+			case  op::inc<typ::i>: POP_A  stack.push({ .i = a.i + 1 }); break;
+			case  op::inc<typ::f>: POP_A  stack.push({ .f = a.f + 1 }); break;
+			case  op::dec<typ::i>: POP_A  stack.push({ .i = a.i - 1 }); break;
+			case  op::dec<typ::f>: POP_A  stack.push({ .f = a.f - 1 }); break;
+			case      op::b_and<>: POP_BA stack.push({ .i = (a.i & b.i) }); break;
+			case       op::b_or<>: POP_BA stack.push({ .i = (a.i | b.i) }); break;
+			case      op::l_not<>: POP_A  stack.push({ .i = ! a.i }); break;
+			case      op::b_xor<>: POP_BA stack.push({ .i = (a.i ^ b.i) }); break;
+			case     op::invert<>: POP_A  stack.push({ .i = ~ a.i }); break;
+			case     op::negate<>: POP_A  stack.push({ .i = (~ a.i) + 1}); break;
+			case  op::shift<typ::r>: POP_A stack.push({ .i = a.i >> getB(++i) }); break;
+			case  op::shift<typ::l>: POP_A stack.push({ .i = a.i << getB(++i) }); break;
+			case op::rotate<typ::r>: POP_A stack.push({ .i = rotateR(a.i, getB(++i)) }); break;
+			case op::rotate<typ::l>: POP_A stack.push({ .i = rotateL(a.i, getB(++i)) }); break;
 		}
 		++i;
 	}

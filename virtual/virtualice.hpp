@@ -6,75 +6,63 @@
 #include "../tools/arr.hpp"
 #include "../tools/stk.hpp"
 
-enum op: u8 {
-	_halt,
-	_rest,
-	_push_b,
-	_push_w,
-	_push_d,
-	_push_q,
-	_push_z,
-	_push_o,
-	_pop,
-	_pop_n,
-	_top,
-	_cast_b,
-	_cast_w,
-	_cast_d,
-	_cast_q,
-	_add_i,
-	_add_f,
-	_sub_i,
-	_sub_f,
-	_mul_i,
-	_mul_f,
-	_div_i,
-	_div_f,
-	_mod_i,
-	_mod_f,
-	_inc_i,
-	_inc_f,
-	_dec_i,
-	_dec_f,
-	_xand,
-	_xor,
-	_and,
-	_or,
-	_not,
-	_inv,
-	_neg,
-	_shift_l,
-	_shift_r,
-	_rotate_l,
-	_rotate_r,
-	_get_l,
-	_get_g,
-	_set_l,
-	_set_g,
-	_call,
-	_kernel,
-	_return,
-	_fork,
-	_join,
-	_abort,
-	_abort_t,
-	_lock,
-	_release,
-	_wait_t,
-	_wait_a,
-	_wait_s,
-	_throw,
-	_catch,
-	_jump,
-	_jump_t,
-	_jump_f,
-	_jump_e,
-	_jump_n,
-	_jump_ge,
-	_jump_le,
-	_jump_g,
-	_jump_l,
+#define TYP static constexpr u8
+#define OPC template <u8 T = 0> TYP
+
+class typ {
+	public:
+	TYP b = 0;
+	TYP w = 1;
+	TYP d = 2;
+	TYP q = 3;
+	TYP z = 4;
+	TYP o = 5;
+	TYP r = 0;
+	TYP l = 1;
+	TYP n = 1;
+	TYP i = 0;
+	TYP f = 1;
 };
+
+class op {
+
+	public:
+
+	OPC halt = 0x00;
+	OPC rest = 0x01;
+
+	OPC push = 0x02 + T; // 6
+	OPC pop  = 0x08 + T; // 2
+	OPC top  = 0x0A;
+	OPC cast = 0x0B + T; // 4
+
+	// padding of 0x02
+
+	OPC add = 0x10 + T; // 2
+	OPC sub = 0x12 + T; // 2
+	OPC mul = 0x14 + T; // 2
+	OPC div = 0x16 + T; // 2
+	OPC mod = 0x18 + T; // 2
+	OPC inc = 0x1A + T; // 2
+	OPC dec = 0x1C + T; // 2
+
+	// padding of 0x03
+
+	OPC b_and = 0x20;
+	OPC b_or  = 0x21;
+	OPC l_not = 0x22;
+	OPC b_xor = 0x23;
+
+	OPC invert = 0x24;
+	OPC negate = 0x25;
+
+	OPC shift  = 0x26 + T; // 2
+	OPC rotate = 0x28 + T; // 2
+
+};
+
+#undef OPC
+#undef TYP
 
 union val { u64 i; f64 f; };
 
@@ -82,22 +70,22 @@ class vm {
 
 	private:
 
-	// ========= MICRO OPTIMISATIONS =========
+	// ========= MICRO OPCIMISATIONS =========
 	// Equivalent to: "mov reg, dword ptr [p]"
 	// where 'reg' is the right register size,
 	// the compiler will always remove N_MASK.
 
 	[[gnu::always_inline]]
-	inline static val getQ(void * p);
+	inline static u64 getQ(void * p);
 
 	[[gnu::always_inline]]
-	inline static val getD(void * p);
+	inline static u32 getD(void * p);
 
 	[[gnu::always_inline]]
-	inline static val getW(void * p);
+	inline static u16 getW(void * p);
 
 	[[gnu::always_inline]]
-	inline static val getB(void * p);
+	inline static u8  getB(void * p);
 
 	public:
 
