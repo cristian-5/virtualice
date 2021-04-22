@@ -24,6 +24,24 @@ class typ {
 	TYP f = 1;
 };
 
+class jmp {
+	public:
+	TYP t = 1;
+	TYP f = 2;
+	TYP li = 3;
+	TYP gi = 4;
+	TYP ei = 5;
+	TYP nei = 6;
+	TYP lei = 7;
+	TYP gei = 8;
+	TYP lf = 9;
+	TYP gf = 10;
+	TYP ef = 11;
+	TYP nef = 12;
+	TYP lef = 13;
+	TYP gef = 14;
+};
+
 class op {
 
 	public:
@@ -58,6 +76,10 @@ class op {
 
 	OPC shift  = 0x26 + T; // 2
 	OPC rotate = 0x28 + T; // 2
+
+	// padding of 0x00
+
+	OPC jump = 0x2A + T; // 15
 
 };
 

@@ -77,7 +77,8 @@ The instruction set is
 ; jumps:
 
 	jump [address]
-	jump.[t|f|e|n|ge|le|g|l] [address]
+	jump.[t|f] [address]
+	jump.[e|ne|ge|le|g|l].[i|f] [address]
 
 ```
 

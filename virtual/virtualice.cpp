@@ -69,6 +69,23 @@ void vm::run(arr<u8> code) {
 			case  op::shift<typ::l>: POP_A stack.push({ .i = a.i << getB(++i) }); break;
 			case op::rotate<typ::r>: POP_A stack.push({ .i = rotateR(a.i, getB(++i)) }); break;
 			case op::rotate<typ::l>: POP_A stack.push({ .i = rotateL(a.i, getB(++i)) }); break;
+			case       op::jump<>: i = & code.data[getQ(++i)]; continue;
+			case op::jump<jmp::t>: POP_A if (a.i)  { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::f>: POP_A if (!a.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::li>: POP_BA if (a.i < b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::gi>: POP_BA if (a.i > b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::ei>: POP_BA if (a.i == b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::nei>: POP_BA if (a.i != b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::lei>: POP_BA if (a.i <= b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::gei>: POP_BA if (a.i >= b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::lf>: POP_BA if (a.f < b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::gf>: POP_BA if (a.f > b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::ef>: POP_BA if (a.f == b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::nef>: POP_BA if (a.f != b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::lef>: POP_BA if (a.f <= b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+			case op::jump<jmp::gef>: POP_BA if (a.f >= b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
+
+
 		}
 		++i;
 	}
