@@ -80,3 +80,7 @@ The instruction set is
 	jump.[t|f|e|n|ge|le|g|l] [address]
 
 ```
+
+## Testing
+
+For testing purposes install [`customasm`](https://github.com/hlorenzi/customasm).
