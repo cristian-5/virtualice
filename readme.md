@@ -85,3 +85,7 @@ The instruction set is
 ## Testing
 
 For testing purposes install [`customasm`](https://github.com/hlorenzi/customasm).
+
+``` zsh
+customasm test.asm -f binary -o test.bin
+```

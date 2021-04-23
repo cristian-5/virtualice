@@ -15,6 +15,13 @@
 #define POP_BA b = stack.pop(); a = stack.pop();
 #define POP_AB a = stack.pop(); b = stack.pop();
 
+#define CMP_I(_) if (a.i _ b.i)
+#define CMP_F(_) if (a.f _ b.f)
+
+#define UPDATE_I(T) i = & code.data[get##T(++i)]; continue
+#define SKIP(N) i += N
+#define SKIP_NEXT(N) i += N + 1; continue
+
 [[gnu::always_inline]]
 u64 vm::getQ(void * p) { return (* ((u64 *)p)); }
 [[gnu::always_inline]]
@@ -69,23 +76,21 @@ void vm::run(arr<u8> code) {
 			case  op::shift<typ::l>: POP_A stack.push({ .i = a.i << getB(++i) }); break;
 			case op::rotate<typ::r>: POP_A stack.push({ .i = rotateR(a.i, getB(++i)) }); break;
 			case op::rotate<typ::l>: POP_A stack.push({ .i = rotateL(a.i, getB(++i)) }); break;
-			case       op::jump<>: i = & code.data[getQ(++i)]; continue;
-			case op::jump<jmp::t>: POP_A if (a.i)  { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::f>: POP_A if (!a.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::li>: POP_BA if (a.i < b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::gi>: POP_BA if (a.i > b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::ei>: POP_BA if (a.i == b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::nei>: POP_BA if (a.i != b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::lei>: POP_BA if (a.i <= b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::gei>: POP_BA if (a.i >= b.i) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::lf>: POP_BA if (a.f < b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::gf>: POP_BA if (a.f > b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::ef>: POP_BA if (a.f == b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::nef>: POP_BA if (a.f != b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::lef>: POP_BA if (a.f <= b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-			case op::jump<jmp::gef>: POP_BA if (a.f >= b.f) { i = & code.data[getQ(++i)]; continue; } else i += 8; break;
-
-
+			case         op::jump<>: UPDATE_I(Q);
+			case   op::jump<jmp::t>: POP_A if (a.i)   { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case   op::jump<jmp::f>: POP_A if (!a.i)  { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case  op::jump<jmp::li>: POP_BA CMP_I(<)  { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case  op::jump<jmp::gi>: POP_BA CMP_I(>)  { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case  op::jump<jmp::ei>: POP_BA CMP_I(==) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case op::jump<jmp::nei>: POP_BA CMP_I(!=) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case op::jump<jmp::lei>: POP_BA CMP_I(<=) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case op::jump<jmp::gei>: POP_BA CMP_I(>=) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case  op::jump<jmp::lf>: POP_BA CMP_F(<)  { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case  op::jump<jmp::gf>: POP_BA CMP_F(>)  { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case  op::jump<jmp::ef>: POP_BA CMP_F(==) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case op::jump<jmp::nef>: POP_BA CMP_F(!=) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case op::jump<jmp::lef>: POP_BA CMP_F(<=) { UPDATE_I(Q); } else SKIP_NEXT(8);
+			case op::jump<jmp::gef>: POP_BA CMP_F(>=) { UPDATE_I(Q); } else SKIP_NEXT(8);
 		}
 		++i;
 	}
@@ -99,5 +104,12 @@ void vm::run(arr<u8> code) {
 #undef POP_A
 #undef POP_BA
 #undef POP_AB
+
+#undef CMP_I
+#undef CMP_F
+
+#undef UPDATE_I
+#undef SKIP
+#undef SKIP_NEXT
 
 #endif

@@ -56,4 +56,25 @@
 	rotate.r {value: u6} => 0x28 @ value`8
 	rotate.l {value: u6} => 0x29 @ value`8
 
+	; padding of 0x00
+
+	jump {address: u64} => 0x2A @ address`64
+
+	jump.t {address: u64} => 0x2B @ address`64
+	jump.f {address: u64} => 0x2C @ address`64
+
+	jump.i.l {address: u64} => 0x2D @ address`64
+	jump.i.g {address: u64} => 0x2E @ address`64
+	jump.i.e {address: u64} => 0x2F @ address`64
+	jump.i.ne {address: u64} => 0x30 @ address`64
+	jump.i.le {address: u64} => 0x31 @ address`64
+	jump.i.ge {address: u64} => 0x32 @ address`64
+
+	jump.f.l {address: u64} => 0x33 @ address`64
+	jump.f.g {address: u64} => 0x34 @ address`64
+	jump.f.e {address: u64} => 0x35 @ address`64
+	jump.f.ne {address: u64} => 0x36 @ address`64
+	jump.f.le {address: u64} => 0x37 @ address`64
+	jump.f.ge {address: u64} => 0x38 @ address`64
+
 }
