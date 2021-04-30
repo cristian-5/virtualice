@@ -57,7 +57,8 @@ The instruction set is
 ; functions, threads, exceptions:
 
 	call     [address]
-	kernel   [code]     ; syscall
+	call.l
+	call.k   [code]     ; syscall
 	return
 
 	fork     [address]

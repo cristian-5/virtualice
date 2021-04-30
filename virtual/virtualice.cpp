@@ -91,7 +91,8 @@ void vm::run(arr<u8> code) {
 			case op::jump<jmp::nef>: POP_BA CMP_F(!=) { UPDATE_I(Q); } else SKIP_NEXT(8);
 			case op::jump<jmp::lef>: POP_BA CMP_F(<=) { UPDATE_I(Q); } else SKIP_NEXT(8);
 			case op::jump<jmp::gef>: POP_BA CMP_F(>=) { UPDATE_I(Q); } else SKIP_NEXT(8);
-		}
+			case op::call<>: stack.push({ .i = (u64)(i + 9) }); i = (u8 *)getQ(++i); continue;
+			case  op::ret<>: POP_BA i = (u8 *)a.i; stack.decrease(stack.pop().i); stack.push(b); continue;
 		++i;
 	}
 }

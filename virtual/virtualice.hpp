@@ -81,6 +81,11 @@ class op {
 
 	OPC jump = 0x2A + T; // 15
 
+	// padding of 0x00
+
+	OPC call = 0x3A + T; // 3
+	OPC ret  = 0x3D;
+
 };
 
 #undef OPC
