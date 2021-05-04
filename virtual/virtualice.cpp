@@ -98,6 +98,8 @@ void vm::run(arr<u8> code) {
 			case  op::inc<typ::f>: POP_A  stack.push({ .f = a.f + 1 }); break;
 			case  op::dec<typ::i>: POP_A  stack.push({ .i = a.i - 1 }); break;
 			case  op::dec<typ::f>: POP_A  stack.push({ .f = a.f - 1 }); break;
+			case  op::convert<typ::i>: POP_A stack.push({ .i = (u64)a.f }); break;
+			case  op::convert<typ::f>: POP_A stack.push({ .f = (f64)a.i }); break;
 			case      op::b_and<>: POP_BA stack.push({ .i = (a.i & b.i) }); break;
 			case       op::b_or<>: POP_BA stack.push({ .i = (a.i | b.i) }); break;
 			case      op::l_not<>: POP_A  stack.push({ .i = ! a.i }); break;

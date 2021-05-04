@@ -33,6 +33,7 @@ The instruction set is
 	pop.n [number]    ; pop n values
 	top               ; duplicates stack top
 	cast.[b|w|d|q]    ; value casting with size
+	convert.to.[i|f]  ; value conversion with type
 
 ; arithmetics: (i = int, f = float)
 
@@ -60,7 +61,7 @@ The instruction set is
 ; functions, threads, exceptions:
 
 	arity    [number]   ; set function arity
-	call     [address]
+	call     [function]
 	call.l
 	call.k   [function] ; call to kernel
 	return

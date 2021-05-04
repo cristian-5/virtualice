@@ -77,7 +77,7 @@ class op {
 	OPC top  = 0x0A;
 	OPC cast = 0x0B + T; // 4
 
-	// padding of 0x02
+	// padding of 0x01
 
 	OPC add = 0x10 + T; // 2
 	OPC sub = 0x12 + T; // 2
@@ -87,7 +87,11 @@ class op {
 	OPC inc = 0x1A + T; // 2
 	OPC dec = 0x1C + T; // 2
 
-	// padding of 0x03
+	// padding of 0x00
+
+	OPC convert = 0x1E + T; // 2
+
+	// padding of 0x00
 
 	OPC b_and = 0x20;
 	OPC b_or  = 0x21;

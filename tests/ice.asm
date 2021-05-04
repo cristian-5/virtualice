@@ -22,7 +22,7 @@
 	cast.d => 0x0D
 	cast.q => 0x0E
 
-	; padding of 0x02
+	; padding of 0x01
 
 	add.i => 0x10
 	add.f => 0x11
@@ -39,7 +39,12 @@
 	dec.i => 0x1C
 	dec.f => 0x1D
 
-	; padding of 0x03
+	; padding of 0x00
+
+	convert.to.i => 0x1E
+	convert.to.f => 0x1F
+
+	; padding of 0x00
 
 	and => 0x20
 	or  => 0x21
