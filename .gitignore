@@ -1,2 +1,9 @@
 
+/tests/*.ice
 /tests/*.bin
+
+/build/
+
+.ninja_log
+
+virtualice

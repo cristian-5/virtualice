@@ -52,13 +52,15 @@ class stk {
 		stack[count++] = node;
 	}
 
-	TYP top() { return stack[count - 1]; }
+	TYP & top() { return stack[count - 1]; }
 
 	TYP pop() { return stack[--count]; }
 	
 	void decrease() { count--; }
 
-	void decrease(siz number) { count -= number; }
+	void decreaseBy(siz number) { count -= number; }
+
+	void decreaseTo(siz index) { count = index; }
 
 	bln isEmpty() { return !count; }
 

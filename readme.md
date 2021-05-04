@@ -4,6 +4,14 @@
 Stack based vm for super fast execution.
 Supports threads, exceptions, and kernel extensions.
 
+## Architecture
+
+The architecture is capable of executing operations on 64bit integers
+and 64bit floating point numbers. The instruction addresses are 32bit
+long. Jumps are absolute. Function variables, function parameters are
+restricted to a maximum addressing of 2^16 (65,535 variables). Global
+variables are restricted to a maximum addressing of 2^32.
+
 ### Instruction Set
 
 We are currently working on this.
@@ -49,17 +57,20 @@ The instruction set is
 	shift.[l|r]    [number]
 	rotate.[l|r]   [number]
 
+; functions, threads, exceptions:
+
+	arity    [number]   ; set function arity
+	call     [address]
+	call.l
+	call.k   [function] ; call to kernel
+	return
+
 ; variables: (l = local, g = global, a = argument)
 
 	get.[l|g|a] [variable index]
 	set.[l|g|a] [variable index]
 
-; functions, threads, exceptions:
-
-	call     [address]
-	call.l
-	call.k   [code]     ; syscall
-	return
+; threads
 
 	fork     [address]
 	join                ; will not work in locks
@@ -78,7 +89,7 @@ The instruction set is
 ; jumps:
 
 	jump [address]
-	jump.[t|f] [address]
+	jump.[z|nz] [address]
 	jump.[e|ne|ge|le|g|l].[i|f] [address]
 
 ```
@@ -88,5 +99,13 @@ The instruction set is
 For testing purposes install [`customasm`](https://github.com/hlorenzi/customasm).
 
 ``` zsh
-customasm test.asm -f binary -o test.bin
+
+cd tests
+customasm test.asm -f binary -o test.ice
+
+cd ..
+ninja
+
+./virtualice tests/test.ice
+
 ```

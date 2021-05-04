@@ -13,7 +13,7 @@
 	push.o => 0x07
 
 	pop => 0x08
-	pop.n {value: u64} => 0x09 @ value
+	pop.n {number: u16} => 0x09 @ number`16
 
 	top => 0x0A
 
@@ -58,23 +58,50 @@
 
 	; padding of 0x00
 
-	jump {address: u64} => 0x2A @ address`64
+	jump {address: u32} => 0x2A @ address`32
 
-	jump.t {address: u64} => 0x2B @ address`64
-	jump.f {address: u64} => 0x2C @ address`64
+	jump.t {address: u32} => 0x2B @ address`32
+	jump.f {address: u32} => 0x2C @ address`32
 
-	jump.i.l {address: u64} => 0x2D @ address`64
-	jump.i.g {address: u64} => 0x2E @ address`64
-	jump.i.e {address: u64} => 0x2F @ address`64
-	jump.i.ne {address: u64} => 0x30 @ address`64
-	jump.i.le {address: u64} => 0x31 @ address`64
-	jump.i.ge {address: u64} => 0x32 @ address`64
+	jump.i.l {address: u32} => 0x2D @ address`32
+	jump.i.g {address: u32} => 0x2E @ address`32
+	jump.i.e {address: u32} => 0x2F @ address`32
+	jump.i.ne {address: u32} => 0x30 @ address`32
+	jump.i.le {address: u32} => 0x31 @ address`32
+	jump.i.ge {address: u32} => 0x32 @ address`32
 
-	jump.f.l {address: u64} => 0x33 @ address`64
-	jump.f.g {address: u64} => 0x34 @ address`64
-	jump.f.e {address: u64} => 0x35 @ address`64
-	jump.f.ne {address: u64} => 0x36 @ address`64
-	jump.f.le {address: u64} => 0x37 @ address`64
-	jump.f.ge {address: u64} => 0x38 @ address`64
+	jump.f.l {address: u32} => 0x33 @ address`32
+	jump.f.g {address: u32} => 0x34 @ address`32
+	jump.f.e {address: u32} => 0x35 @ address`32
+	jump.f.ne {address: u32} => 0x36 @ address`32
+	jump.f.le {address: u32} => 0x37 @ address`32
+	jump.f.ge {address: u32} => 0x38 @ address`32
+
+	; padding of 0x01
+
+	call {address: u32} => 0x3A @ address`32
+	call.l => 0x3B
+	call.k {code: u8} => 0x3C @ code`8
+
+	return => 0x3D
+
+	arity {number: u16} => 0x3E @ number`16
+
+	; padding of 0x01
+
+	get.g {index: u32} => 0x40 @ index`32
+	get.l {index: u16} => 0x41 @ index`16
+	get.a {index: u16} => 0x42 @ index`16
+
+	set.g {index: u32} => 0x43 @ index`32
+	set.l {index: u16} => 0x44 @ index`16
+	set.a {index: u16} => 0x45 @ index`16
 
 }
+
+ostream = 0x55
+istream = 0x44
+fork    = 0xFF
+join    = 0x00
+sign    = 0x69
+debug   = 0xDE

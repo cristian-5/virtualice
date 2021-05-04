@@ -1,0 +1,27 @@
+
+# commands:
+
+cppFlags = -O3
+cppVersion = -std=c++2a
+
+ice = tools/ice.hpp
+arr = tools/arr.hpp
+stk = tools/stk.hpp
+
+rule compile
+    command = clang++ -g -c $cppFlags -o $out $in $cppVersion
+
+rule link
+    command = clang++ $cppFlags -g -o $out $in $cppVersion
+
+# build:
+
+build build/virtualice.o: compile virtual/virtualice.cpp | $ice $arr $stk
+
+# main:
+
+build build/main.o: compile main.cpp | $ice $arr
+
+# link:
+
+build virtualice: link build/main.o build/virtualice.o

@@ -26,8 +26,8 @@ class typ {
 
 class jmp {
 	public:
-	TYP t = 1;
-	TYP f = 2;
+	TYP z = 1;
+	TYP nz = 2;
 	TYP li = 3;
 	TYP gi = 4;
 	TYP ei = 5;
@@ -40,6 +40,29 @@ class jmp {
 	TYP nef = 12;
 	TYP lef = 13;
 	TYP gef = 14;
+};
+
+class cll {
+	public:
+	TYP l = 1;
+	TYP k = 2;
+};
+
+class var {
+	public:
+	TYP g = 0;
+	TYP l = 1;
+	TYP a = 2;
+};
+
+class krn {
+	public:
+	TYP ostream = 0x55;
+	TYP istream = 0x44;
+	TYP fork    = 0xFF;
+	TYP join    = 0x00;
+	TYP sign    = 0x69;
+	TYP debug   = 0xDE;
 };
 
 class op {
@@ -81,10 +104,16 @@ class op {
 
 	OPC jump = 0x2A + T; // 15
 
-	// padding of 0x00
+	// padding of 0x01
 
-	OPC call = 0x3A + T; // 3
-	OPC ret  = 0x3D;
+	OPC call  = 0x3A + T; // 3
+	OPC ret   = 0x3D;
+	OPC arity = 0x3E;
+
+	// padding of 0x01
+
+	OPC get  = 0x40 + T; // 3
+	OPC set  = 0x43 + T; // 3
 
 };
 
@@ -92,6 +121,12 @@ class op {
 #undef TYP
 
 union val { u64 i; f64 f; };
+
+struct cal {
+	u64 lfp = 0; // last frame pointer
+	u64 ret = 0; // return address
+	u16 ari = 0; // function arity
+};
 
 class vm {
 

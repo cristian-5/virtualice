@@ -6,6 +6,10 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include <type_traits>
+#include <bit>
+
+using byt = char;
 using chr = char;
 using bln = bool;
 using u8  = uint_fast8_t;
@@ -27,14 +31,17 @@ static_assert(sizeof(f64) == 8, "Please adjust the (f64) type alias!");
 
 template <typename TYP>
 static constexpr TYP rotateL(TYP v, u8 n = 1) {
-	static_assert(std::is_unsigned<TYP>::val);
+	static_assert(std::is_unsigned<TYP>::value);
 	return (v << n) | (v >> (sizeof(TYP) * 8 - n));
 }
 
 template <typename TYP>
 static constexpr TYP rotateR(TYP v, u8 n = 1) {
-	static_assert(std::is_unsigned<TYP>::val);
+	static_assert(std::is_unsigned<TYP>::value);
 	return (v >> n) | (v << (sizeof(TYP) * 8 - 1));
 }
+
+static constexpr bln little_endian = std::endian::native == std::endian::little;
+static constexpr bln big_endian = std::endian::native == std::endian::big;
 
 #endif
