@@ -2,7 +2,7 @@
 # commands:
 
 cppFlags = -O3
-cppVersion = -std=c++2a
+cppVersion = -std=c++20
 
 ice = tools/ice.hpp
 arr = tools/arr.hpp
