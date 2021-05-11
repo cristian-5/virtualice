@@ -5,7 +5,7 @@ main:
 
 	push.b    10
 	call      fibonacci
-	call.k    ostream     ; should print 55
+	call.k    debug       ; should print 55
 	halt
 
 ; func fibonacci(n: Natural): Natural;
