@@ -22,7 +22,11 @@
 	cast.d => 0x0D
 	cast.q => 0x0E
 
-	; padding of 0x01
+	; padding of 0x00
+
+	raise => 0x0F
+
+	; padding of 0x00
 
 	add.i => 0x10
 	add.f => 0x11
@@ -82,7 +86,9 @@
 	jump.f.le {address: u32} => 0x37 @ address`32
 	jump.f.ge {address: u32} => 0x38 @ address`32
 
-	; padding of 0x01
+	jump.ex {address: u32} => 0x39 @ address`32
+
+	; padding of 0x00
 
 	call {address: u32} => 0x3A @ address`32
 	call.l => 0x3B
@@ -104,9 +110,27 @@
 
 }
 
+estream = 0x66
 ostream = 0x55
 istream = 0x44
-fork    = 0xFF
-join    = 0x00
-sign    = 0x69
-debug   = 0xDE
+
+fork    = 0xF0
+join    = 0xEF
+sleep   = 0x57
+wait    = 0xA1
+lock    = 0x88
+release = 0x33
+
+allocate   = 0xA7
+deallocate = 0xDA
+reallocate = 0x2A
+copy       = 0xC0
+load       = 0x70
+zeros      = 0x00
+fill       = 0xF1
+compare    = 0xC2
+
+debug  = 0xDE
+time   = 0x71
+seed   = 0x5E
+random = 0x3A

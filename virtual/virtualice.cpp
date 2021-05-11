@@ -2,6 +2,11 @@
 #ifndef VIRTUALICE_CPP
 #define VIRTUALICE_CPP
 
+#include <chrono>
+#include <thread>
+
+using namespace std;
+
 #include "virtualice.hpp"
 
 #define F_MOD(N, D) N - (u64)(D * N / D)
@@ -61,15 +66,19 @@ u8  vm::getB(void * p) { return (* ((u8  *)p)) & B_MASK; }
 
 #undef PU8
 
-void vm::run(arr<u8> code) {
-	u8 * i = code.data;
+mutex vm::critical;
+
+void vm::run(arr<u8> code, u64 p) {
+	u8 * i = & code.data[p];
 	stk<val> stack;
 	stk<cal> frame;
 	val a, b;
 	siz fp = 0;
+	bln ex = false;
+	pcg::seed((u64)time(nullptr));
 	while (true) {
 		switch (* i) {
-			case op::halt<>: return;
+			case op::halt<>: exit(0);
 			case op::rest<>: break;
 			case op::push<typ::b>: stack.push({ .i = getB(++i) }); break;
 			case op::push<typ::w>: stack.push({ .i = getW(++i) }); SKIP(2); continue;
@@ -80,10 +89,11 @@ void vm::run(arr<u8> code) {
 			case        op::pop<>: stack.decrease(); break;
 			case  op::pop<typ::n>: stack.decreaseBy(getW(++i)); SKIP(2); continue;
 			case        op::top<>: stack.push(stack.top()); break;
-			case op::cast<typ::b>: stack.push(V_CAST(stack.pop(), B));
-			case op::cast<typ::w>: stack.push(V_CAST(stack.pop(), W));
-			case op::cast<typ::d>: stack.push(V_CAST(stack.pop(), D));
-			case op::cast<typ::q>: stack.push(V_CAST(stack.pop(), Q));
+			case op::cast<typ::b>: stack.push(V_CAST(stack.pop(), B)); break;
+			case op::cast<typ::w>: stack.push(V_CAST(stack.pop(), W)); break;
+			case op::cast<typ::d>: stack.push(V_CAST(stack.pop(), D)); break;
+			case op::cast<typ::q>: stack.push(V_CAST(stack.pop(), Q)); break;
+			case      op::raise<>: ex = true; break;
 			case  op::add<typ::i>: POP_BA stack.push({ .i = a.i + b.i }); break;
 			case  op::add<typ::f>: POP_BA stack.push({ .f = a.f + b.f }); break;
 			case  op::sub<typ::i>: POP_BA stack.push({ .i = a.i - b.i }); break;
@@ -125,6 +135,7 @@ void vm::run(arr<u8> code) {
 			case op::jump<jmp::nef>: POP_BA CMP_F(!=) { UPDATE_I(D); } else SKIP_NEXT(4);
 			case op::jump<jmp::lef>: POP_BA CMP_F(<=) { UPDATE_I(D); } else SKIP_NEXT(4);
 			case op::jump<jmp::gef>: POP_BA CMP_F(>=) { UPDATE_I(D); } else SKIP_NEXT(4);
+			case  op::jump<jmp::ex>: if (ex) { ex = false; UPDATE_I(D); } else SKIP_NEXT(4);
 			case op::call<>:
 				// step 1: save lfp, ret, arity = 0:
 				frame.push({
@@ -139,21 +150,67 @@ void vm::run(arr<u8> code) {
 			continue;
 			case op::call<cll::k>:
 				switch (getB(++i)) {
-					case krn::ostream: POP_A printf("%llu\n", a.i); break;
-					case   krn::debug:
-						printf("= STACK ========================================\n");
+					case krn::estream: e_stream(stack.pop().p); break;
+					case krn::ostream: o_stream(stack.pop().p); break;
+					case krn::istream: break;
+					
+					case krn::fork: {
+						thread * t = new thread(run, code, stack.pop().i);
+						stack.push({ .p = t });
+					} break;
+					case krn::join: return;
+					case krn::sleep:
+						this_thread::sleep_for(
+							chrono::milliseconds(stack.pop().i)
+						);
+					break;
+					case krn::wait: ((thread *)stack.pop().p) -> join(); break;
+					case krn::lock: critical.lock(); break;
+					case krn::release: critical.unlock(); break;
+
+					case krn::allocate:
+						stack.push({ .p = malloc(stack.pop().i) });
+					break;
+					case krn::deallocate: free(stack.pop().p); break;
+					case krn::reallocate:
+						stack.push({ .p = realloc(stack.pop().p, stack.pop().i) });
+					break;
+					case krn::copy: POP_AB memcpy(b.p, a.p, stack.pop().i);
+					break;
+					case krn::load:
+						POP_AB memcpy(b.p, & code.data[a.i], stack.pop().i);
+					break;
+					case krn::zeros:
+						memset(stack.pop().p, 0x00, stack.pop().i);
+					break;
+					case krn::fill:
+						POP_AB memset(b.p, (u8)a.i, stack.pop().i);
+					break;
+					case krn::compare:
+						stack.push({ .i = memcmp(
+							stack.pop().p,
+							stack.pop().p,
+							stack.pop().i
+						) & 1ull });
+					break;
+
+					case krn::debug:
+						puts("= STACK ========================================");
 						for (siz j = 0; j < stack.size(); j++) {
 							printf("%llu\n", stack[j].i);
 						}
 						if (!frame.isEmpty()) {
-							printf("- FRAME ----------------------------------------\n");
+							puts("- FRAME ----------------------------------------");
 							for (siz j = 0; j < frame.size(); j++) {
 								printf("fp: %llu lfp: %llu ret: %llu arity: %d\n",
 									fp, frame[j].lfp, frame[j].ret, frame[j].ari);
 							}
 						}
-						printf("================================================\n");
+						puts("================================================");
 					break;
+					case krn::time: stack.push({ .i = (u64)time(nullptr) }); break;
+					case krn::seed: pcg::seed(stack.pop().i); break;
+					case krn::random: stack.push({ .i = pcg::next() }); break;
 				}
 			break;
 			case op::call<cll::l>: break;

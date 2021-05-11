@@ -7,6 +7,7 @@ cppVersion = -std=c++20
 ice = tools/ice.hpp
 arr = tools/arr.hpp
 stk = tools/stk.hpp
+pcg = tools/pcg.hpp
 
 rule compile
     command = clang++ -g -c $cppFlags -o $out $in $cppVersion
@@ -16,7 +17,7 @@ rule link
 
 # build:
 
-build build/virtualice.o: compile virtual/virtualice.cpp | $ice $arr $stk
+build build/virtualice.o: compile virtual/virtualice.cpp | $ice $arr $stk $pcg
 
 # main:
 

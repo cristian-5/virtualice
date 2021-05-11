@@ -3,33 +3,21 @@
 
 main:
 
-	push.b    10
-	call      fibonacci
-	call.k    ostream     ; should print 55
+	; allocate enough memory:
+	push.b    string_0_length
+	call.k    allocate
+
+	; load the string in memory:
+	push.b    string_0_length   ; number of bytes to copy
+	get.g     0                 ; get allocation ptr (destination)
+	push.d    string_0          ; code pointer (source)
+	call.k    load              ; fun load(s: u32, d: *, n: u64): *;
+
+	; print the string:
+	call.k    ostream
+
 	halt
 
-; func fibonacci(n: Natural): Natural;
-fibonacci: n = 0 ; n is the argument 0
-
-	arity     1           ; number of arguments
-
-	get.a     n           ; get n
-	push.b    2
-
-	jump.i.l  base_case   ; if (n < 2) jump base_case
-						  ; else:
-	get.a     n           ; get n
-	dec.i                 ; n - 1
-	call      fibonacci
-
-	get.a     n           ; get n
-	dec.i
-	dec.i                 ; n - 2
-	call      fibonacci
-
-	add.i                 ; add the 2 calls
-	return
-
-	base_case:
-	get.a     n
-	return                ; else return n
+string_0:
+	#d "hello world!", 0x00
+	string_0_length = $ - string_0

@@ -6,20 +6,29 @@
 
 // PCG Based on Professor's Melissa E. O'Neill research.
 
-static u32 pcg32() {
-	static u64 state, inc;
-	u64 oldstate = state;
-	// Advance internal state (at least by 1 if inc == 0).
-	state = oldstate * 6364136223846793005ull + (inc | 1);
-	// Calculate output function xshrr (XOR SHIFT RIGHT RIGHT)
-	// Using old state for maximum ilp (Instruction Level Parallelism)
-	u32 xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
-	u32 rot = oldstate >> 59u;
-	return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
-}
+class pcg {
 
-static u64 pcg64() {
-	return ((u64)pcg32() << 32) | (u64)pcg32();
-}
+	private:
+
+		static const u64 n = 6364136223846793005;
+		static const u64 inc = 0xDA3E39CB94B95BDB;
+		inline static u64 state = 0x853C49E6748FEA9B;
+		static const u64 s = 0xC20580B23E7C23FB;
+
+	public:
+
+	static u64 next() {
+		u64 old = state;
+		state = old * n + inc;
+		u64 shifted = ((old >> 18) ^ old) >> 27;
+		u64 rot = old >> 59;
+		return ((shifted >> rot) | (shifted << ((~rot + 1) & 0x1F))) ^ s;
+	}
+
+	static void seed(u64 s) {
+		state = 0x8788A81453C0274A ^ s;
+	}
+
+};
 
 #endif

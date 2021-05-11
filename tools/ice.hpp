@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
+#include <ctime>
 
 #include <type_traits>
 #include <bit>
@@ -24,10 +25,16 @@ using i64 = int_fast64_t;
 using f32 = float;
 using f64 = double;
 
-static_assert(sizeof(bln) == 1, "Please adjust the (bln) type alias!");
-static_assert(sizeof(chr) == 1, "Please adjust the (chr) type alias!");
-static_assert(sizeof(f32) == 4, "Please adjust the (f32) type alias!");
-static_assert(sizeof(f64) == 8, "Please adjust the (f64) type alias!");
+using std::fputc;
+using std::fputs;
+using std::perror;
+
+static_assert(sizeof(bln) == 1, "Please check the (bln) type alias!");
+static_assert(sizeof(chr) == 1, "Please check the (chr) type alias!");
+static_assert(sizeof(f32) == 4, "Please check the (f32) type alias!");
+static_assert(sizeof(f64) == 8, "Please check the (f64) type alias!");
+
+static_assert(sizeof(time_t) == 8, "Please check the (time) type size!");
 
 template <typename TYP>
 static constexpr TYP rotateL(TYP v, u8 n = 1) {
@@ -43,5 +50,18 @@ static constexpr TYP rotateR(TYP v, u8 n = 1) {
 
 static constexpr bln little_endian = std::endian::native == std::endian::little;
 static constexpr bln big_endian = std::endian::native == std::endian::big;
+
+[[gnu::always_inline]]
+static inline void e_stream(void * p) {
+	if (fputs(static_cast<const chr *>(p), stderr) == EOF) {
+		perror("fputs()");
+	}
+}
+[[gnu::always_inline]]
+static inline void o_stream(void * p) {
+	if (fputs(static_cast<const chr *>(p), stdout) == EOF) {
+		perror("fputs()");
+	}
+}
 
 #endif

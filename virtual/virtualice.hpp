@@ -2,9 +2,12 @@
 #ifndef VIRTUALICE_HPP
 #define VIRTUALICE_HPP
 
+#include <mutex>
+
 #include "../tools/ice.hpp"
 #include "../tools/arr.hpp"
 #include "../tools/stk.hpp"
+#include "../tools/pcg.hpp"
 
 #define TYP static constexpr u8
 #define OPC template <u8 T = 0> TYP
@@ -40,6 +43,7 @@ class jmp {
 	TYP nef = 12;
 	TYP lef = 13;
 	TYP gef = 14;
+	TYP ex = 15;
 };
 
 class cll {
@@ -57,12 +61,32 @@ class var {
 
 class krn {
 	public:
+
+	TYP estream = 0x66;
 	TYP ostream = 0x55;
 	TYP istream = 0x44;
-	TYP fork    = 0xFF;
-	TYP join    = 0x00;
-	TYP sign    = 0x69;
-	TYP debug   = 0xDE;
+
+	TYP fork      = 0xF0;
+	TYP join      = 0xEF;
+	TYP sleep     = 0x57;
+	TYP wait      = 0xA1;
+	TYP lock      = 0x88;
+	TYP release   = 0x33;
+
+	TYP allocate   = 0xA7;
+	TYP deallocate = 0xDA;
+	TYP reallocate = 0x2A;
+	TYP copy       = 0xC0;
+	TYP load       = 0x70;
+	TYP zeros      = 0x00;
+	TYP fill       = 0xF1;
+	TYP compare    = 0xC2;
+
+	TYP debug  = 0xDE;
+	TYP time   = 0x71;
+	TYP seed   = 0x5E;
+	TYP random = 0x3A;
+
 };
 
 class op {
@@ -77,7 +101,11 @@ class op {
 	OPC top  = 0x0A;
 	OPC cast = 0x0B + T; // 4
 
-	// padding of 0x01
+	// padding of 0x00
+
+	OPC raise = 0x0F;
+
+	// padding of 0x00
 
 	OPC add = 0x10 + T; // 2
 	OPC sub = 0x12 + T; // 2
@@ -106,9 +134,9 @@ class op {
 
 	// padding of 0x00
 
-	OPC jump = 0x2A + T; // 15
+	OPC jump = 0x2A + T; // 16
 
-	// padding of 0x01
+	// padding of 0x00
 
 	OPC call  = 0x3A + T; // 3
 	OPC ret   = 0x3D;
@@ -124,7 +152,9 @@ class op {
 #undef OPC
 #undef TYP
 
-union val { u64 i; f64 f; };
+union val { u64 i; f64 f; void * p; };
+
+static_assert(sizeof(val) == 8, "Please adjust the (val) union size!");
 
 struct cal {
 	u64 lfp = 0; // last frame pointer
@@ -153,6 +183,8 @@ class vm {
 	[[gnu::always_inline]]
 	inline static u8  getB(void * p);
 
+	static std::mutex critical;
+
 	public:
 
 	/*!
@@ -164,7 +196,7 @@ class vm {
 	 *    + ------------------------------------- +
 	!*/
 	
-	static void run(arr<u8> code);
+	static void run(arr<u8> code, u64 p = 0);
 
 };
 
