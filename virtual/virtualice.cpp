@@ -208,6 +208,7 @@ void vm::run(arr<u8> code, u64 p) {
 						}
 						puts("================================================");
 					break;
+					case krn::sign: stack.push({ .p = sign(stack.pop().i) }); break;
 					case krn::time: stack.push({ .i = (u64)time(nullptr) }); break;
 					case krn::seed: pcg::seed(stack.pop().i); break;
 					case krn::random: stack.push({ .i = pcg::next() }); break;

@@ -147,6 +147,7 @@ The instruction set is
 | HEX | Prototype                  | Description                                         |
 |:---:|:--------------------------:|:----------------------------------------------------|
 |`DE` | `fun debug();`             | *Prints the stack and the call frame to `stdout`.*  |
+|`51` | `fun sign(n: u64): chr *;` | *Returns the string signature of `n`.*              |
 |`71` | `fun time(): u64;`         | *Returns the current unix timestamp.*               |
 |`5E` | `fun seed(s: u64);`        | *Sets the seed `s` for the next random generation.* |
 |`3A` | `fun random(): u64;`       | *Generates a pseudo random number using a pcg.*     |

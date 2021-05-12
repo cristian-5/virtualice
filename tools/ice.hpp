@@ -64,4 +64,13 @@ static inline void o_stream(void * p) {
 	}
 }
 
+[[gnu::always_inline]]
+static inline chr * sign(u64 n) {
+	static const chr * a = "-IRNYSGTBPABCDEF";
+	chr * s = (chr *)malloc(17);
+	for (i8 i = 15; i >= 0; i--) {
+		s[15 - i] = a[(n >> (4 * i)) & 0xF];
+	} s[16] = 0x00; return s;
+}
+
 #endif

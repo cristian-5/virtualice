@@ -83,6 +83,7 @@ class krn {
 	TYP compare    = 0xC2;
 
 	TYP debug  = 0xDE;
+	TYP sign   = 0x51;
 	TYP time   = 0x71;
 	TYP seed   = 0x5E;
 	TYP random = 0x3A;
