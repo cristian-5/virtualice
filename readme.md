@@ -140,7 +140,7 @@ The instruction set is
 |`C2` | `fun compare(a: *, b: *, n: u64): *;` | *Compares `a` with `b`, for `n` consecutive bytes.* |
 
 > The usage of unallocated or unowned memory will cause
-> a bed access fault resulting in a immediate crash.
+> a bad access fault resulting in a immediate crash.
 
 ### Misc functions
 
