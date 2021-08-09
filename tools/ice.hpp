@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <ctime>
 
+#include <string>
 #include <type_traits>
 #include <bit>
 
@@ -24,6 +25,10 @@ using i32 = int_fast32_t;
 using i64 = int_fast64_t;
 using f32 = float;
 using f64 = double;
+
+#define map std::unordered_map
+#define str std::string
+#define vec std::vector
 
 using std::fputc;
 using std::fputs;
@@ -71,6 +76,11 @@ static inline chr * sign(u64 n) {
 	for (i8 i = 15; i >= 0; i--) {
 		s[15 - i] = a[(n >> (4 * i)) & 0xF];
 	} s[16] = 0x00; return s;
+}
+
+[[gnu::always_inline]]
+static inline str chr_2_str(chr c) {
+	str s; s.push_back(c); return s;
 }
 
 #endif

@@ -34,7 +34,7 @@ using namespace std;
 
 #define UPDATE_I(T) i = & code.data[get##T(++i)]; continue
 #define SKIP(N) i += N
-#define SKIP_NEXT(N) i += N + 1; PUSH_AB continue
+#define SKIP_NEXT(N) i += N + 1; continue
 
 #define PU8 const u8 * n = (u8 *)p;
 
@@ -87,7 +87,7 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::push<typ::z>: stack.push({ .i = 0ull }); break;
 			case op::push<typ::o>: stack.push({ .i = 1ull }); break;
 			case        op::pop<>: stack.decrease(); break;
-			case  op::pop<typ::n>: stack.decreaseBy(getW(++i)); SKIP(2); continue;
+			case  op::pop<typ::n>: stack.decreaseBy(getB(++i)); break;
 			case        op::top<>: stack.push(stack.top()); break;
 			case op::cast<typ::b>: stack.push(V_CAST(stack.pop(), B)); break;
 			case op::cast<typ::w>: stack.push(V_CAST(stack.pop(), W)); break;
@@ -115,12 +115,12 @@ void vm::run(arr<u8> code, u64 p) {
 			case      op::l_not<>: POP_A  stack.push({ .i = ! a.i }); break;
 			case      op::b_xor<>: POP_BA stack.push({ .i = (a.i ^ b.i) }); break;
 			case     op::invert<>: POP_A  stack.push({ .i = ~ a.i }); break;
-			case     op::negate<>: POP_A  stack.push({ .i = (~ a.i) + 1}); break;
+			case   op::complement<>: POP_A stack.push({ .i = - a.i }); break;
 			case  op::shift<typ::r>: POP_A stack.push({ .i = a.i >> getB(++i) }); break;
 			case  op::shift<typ::l>: POP_A stack.push({ .i = a.i << getB(++i) }); break;
 			case op::rotate<typ::r>: POP_A stack.push({ .i = rotateR(a.i, getB(++i)) }); break;
 			case op::rotate<typ::l>: POP_A stack.push({ .i = rotateL(a.i, getB(++i)) }); break;
-			case         op::jump<>: UPDATE_I(D);
+			case         op::jump<>: UPDATE_I(D); continue;
 			case   op::jump<jmp::z>: POP_A if (a.i)   { UPDATE_I(D); } else SKIP_NEXT(4);
 			case  op::jump<jmp::nz>: POP_A if (!a.i)  { UPDATE_I(D); } else SKIP_NEXT(4);
 			case  op::jump<jmp::li>: POP_BA CMP_I(<)  { UPDATE_I(D); } else SKIP_NEXT(4);
@@ -229,13 +229,14 @@ void vm::run(arr<u8> code, u64 p) {
 				// step 6: jump to return address
 				i = (u8 *)current.ret;
 			} continue;
-			case     op::arity<>: frame.top().ari = getW(++i); SKIP(2); continue;
-			case op::get<var::g>: stack.push(stack.at(getD(++i))); SKIP(4); continue;
-			case op::get<var::l>: stack.push(stack.at(fp + getW(++i))); SKIP(2); continue;
-			case op::get<var::a>: stack.push(stack.at(fp - getW(++i) - 1)); SKIP(2); continue;
-			case op::set<var::g>: POP_A stack.edit(getD(++i),  a); SKIP(4); continue;
-			case op::set<var::l>: POP_A stack.edit(fp + getW(++i),  a); SKIP(2); continue;
-			case op::set<var::a>: POP_A stack.edit(fp - getW(++i) - 1,  a); SKIP(2); continue;
+			case     op::arity<>: frame.top().ari = getB(++i); break;
+			case    op::negate<>: POP_A stack.push({ .f = - a.f }); break;
+			case op::get<var::g>: stack.push(stack.at(getW(++i))); SKIP(2); continue;
+			case op::get<var::l>: stack.push(stack.at(fp + getB(++i))); break;
+			case op::get<var::a>: stack.push(stack.at(fp - getB(++i) - 1)); break;
+			case op::set<var::g>: POP_A stack.edit(getW(++i),  a); SKIP(2); continue;
+			case op::set<var::l>: POP_A stack.edit(fp + getB(++i),  a); break;
+			case op::set<var::a>: POP_A stack.edit(fp - getB(++i) - 1,  a); break;
 		}
 		++i;
 	}

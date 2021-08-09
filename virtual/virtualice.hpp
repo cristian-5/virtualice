@@ -88,6 +88,8 @@ class krn {
 	TYP seed   = 0x5E;
 	TYP random = 0x3A;
 
+	TYP factorial = 0xFA;
+
 };
 
 class op {
@@ -127,8 +129,8 @@ class op {
 	OPC l_not = 0x22;
 	OPC b_xor = 0x23;
 
-	OPC invert = 0x24;
-	OPC negate = 0x25;
+	OPC invert     = 0x24;
+	OPC complement = 0x25;
 
 	OPC shift  = 0x26 + T; // 2
 	OPC rotate = 0x28 + T; // 2
@@ -143,7 +145,11 @@ class op {
 	OPC ret   = 0x3D;
 	OPC arity = 0x3E;
 
-	// padding of 0x01
+	// padding of 0x00
+
+	OPC negate = 0x3F;
+
+	// padding of 0x00
 
 	OPC get  = 0x40 + T; // 3
 	OPC set  = 0x43 + T; // 3
@@ -160,7 +166,7 @@ static_assert(sizeof(val) == 8, "Please adjust the (val) union size!");
 struct cal {
 	u64 lfp = 0; // last frame pointer
 	u64 ret = 0; // return address
-	u16 ari = 0; // function arity
+	u8  ari = 0; // function arity
 };
 
 class vm {

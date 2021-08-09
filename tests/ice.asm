@@ -56,7 +56,7 @@
 	xor => 0x23
 
 	invert => 0x24
-	negate => 0x25
+	complement => 0x25
 
 	; 64 = 2^6, 6 bits are enough.
 
@@ -96,17 +96,22 @@
 
 	return => 0x3D
 
-	arity {number: u16} => 0x3E @ number`16
+	arity {number: u8} => 0x3E @ number`8
 
-	; padding of 0x01
+	; padding of 0x00
 
-	get.g {index: u32} => 0x40 @ index`32
-	get.l {index: u16} => 0x41 @ index`16
-	get.a {index: u16} => 0x42 @ index`16
+	negate.i => 0x25   ; for completeness
+	negate.f => 0x3F
 
-	set.g {index: u32} => 0x43 @ index`32
-	set.l {index: u16} => 0x44 @ index`16
-	set.a {index: u16} => 0x45 @ index`16
+	; padding of 0x00
+
+	get.g {index: u16} => 0x40 @ index`16
+	get.l {index: u8} => 0x41 @ index`8
+	get.a {index: u8} => 0x42 @ index`8
+
+	set.g {index: u16} => 0x43 @ index`16
+	set.l {index: u8} => 0x44 @ index`8
+	set.a {index: u8} => 0x45 @ index`8
 
 }
 
