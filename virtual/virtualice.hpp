@@ -73,6 +73,13 @@ class krn {
 	TYP lock      = 0x88;
 	TYP release   = 0x33;
 
+	TYP _u2s = 0xCA;
+	TYP _i2s = 0xCB;
+	TYP _s2u = 0xCC;
+	TYP _s2i = 0xCD;
+	TYP _f2s = 0xCE;
+	TYP _s2f = 0xCF;
+
 	TYP allocate   = 0xA7;
 	TYP deallocate = 0xDA;
 	TYP reallocate = 0x2A;

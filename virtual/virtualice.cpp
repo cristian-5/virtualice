@@ -168,6 +168,22 @@ void vm::run(arr<u8> code, u64 p) {
 					case krn::lock: critical.lock(); break;
 					case krn::release: critical.unlock(); break;
 
+					case krn::_u2s: stack.push({ .p = u2s(stack.pop().i) }); break;
+					case krn::_i2s: stack.push({ .p = i2s(stack.pop().i) }); break;
+					case krn::_s2u:
+						try { stack.push({ .i = s2u((chr *)stack.pop().p) }); }
+						catch (invalid_number) { ex = true; }
+					break;
+					case krn::_s2i:
+						try { stack.push({ .i = (u64)s2i((chr *)stack.pop().p) }); }
+						catch (invalid_number) { ex = true; }
+					break;
+					case krn::_f2s: stack.push({ .p = f2s(stack.pop().f) }); break;
+					case krn::_s2f:
+						try { stack.push({ .f = s2f((chr *)stack.pop().p) }); }
+						catch (invalid_number) { ex = true; }
+					break;
+
 					case krn::allocate:
 						stack.push({ .p = malloc(stack.pop().i) });
 					break;
