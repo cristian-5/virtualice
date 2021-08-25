@@ -55,6 +55,8 @@ The instruction set is
 	invert
 	negate
 
+	swap
+
 	shift.[l|r]    [number]
 	rotate.[l|r]   [number]
 
@@ -78,9 +80,12 @@ The instruction set is
 
 ; jumps:
 
-	jump [address]
-	jump.[z|nz] [address]
-	jump.[i|f].[e|ne|ge|le|g|l] [address]
+	jump       [address]
+	jump.[t|f] [address]
+
+; compare:
+
+	compare.[i|f].[e|ne|ge|le|g|l]
 
 ```
 

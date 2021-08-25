@@ -29,21 +29,24 @@ class typ {
 
 class jmp {
 	public:
-	TYP z = 1;
-	TYP nz = 2;
-	TYP li = 3;
-	TYP gi = 4;
-	TYP ei = 5;
-	TYP nei = 6;
-	TYP lei = 7;
-	TYP gei = 8;
-	TYP lf = 9;
-	TYP gf = 10;
-	TYP ef = 11;
-	TYP nef = 12;
-	TYP lef = 13;
-	TYP gef = 14;
-	TYP ex = 15;
+	TYP t = 1;
+	TYP f = 2;
+};
+
+class cmp {
+	public:
+	TYP li  = 0x0;
+	TYP gi  = 0x1;
+	TYP ei  = 0x2;
+	TYP nei = 0x3;
+	TYP lei = 0x4;
+	TYP gei = 0x5;
+	TYP lf  = 0x6;
+	TYP gf  = 0x7;
+	TYP ef  = 0x8;
+	TYP nef = 0x9;
+	TYP lef = 0xA;
+	TYP gef = 0xB;
 };
 
 class cll {
@@ -111,11 +114,11 @@ class op {
 	OPC top  = 0x0A;
 	OPC cast = 0x0B + T; // 4
 
-	// padding of 0x00
+	// ==========================================
 
 	OPC raise = 0x0F;
 
-	// padding of 0x00
+	// ==========================================
 
 	OPC add = 0x10 + T; // 2
 	OPC sub = 0x12 + T; // 2
@@ -125,11 +128,11 @@ class op {
 	OPC inc = 0x1A + T; // 2
 	OPC dec = 0x1C + T; // 2
 
-	// padding of 0x00
+	// ==========================================
 
 	OPC convert = 0x1E + T; // 2
 
-	// padding of 0x00
+	// ==========================================
 
 	OPC b_and = 0x20;
 	OPC b_or  = 0x21;
@@ -142,24 +145,36 @@ class op {
 	OPC shift  = 0x26 + T; // 2
 	OPC rotate = 0x28 + T; // 2
 
-	// padding of 0x00
+	// ==========================================
 
-	OPC jump = 0x2A + T; // 16
+	OPC jump = 0x2A + T; // 3
 
-	// padding of 0x00
+	// ==========================================
+
+	OPC compare = 0x2D + T; // 12
+
+	// ==========================================
+
+	OPC flag = 0x39;
+
+	// ==========================================
 
 	OPC call  = 0x3A + T; // 3
 	OPC ret   = 0x3D;
 	OPC arity = 0x3E;
 
-	// padding of 0x00
+	// ==========================================
 
 	OPC negate = 0x3F;
 
-	// padding of 0x00
+	// ==========================================
 
 	OPC get  = 0x40 + T; // 3
 	OPC set  = 0x43 + T; // 3
+
+	// ==========================================
+
+	OPC swap = 0x46;
 
 };
 

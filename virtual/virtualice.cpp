@@ -121,21 +121,21 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::rotate<typ::r>: POP_A stack.push({ .i = rotateR(a.i, getB(++i)) }); break;
 			case op::rotate<typ::l>: POP_A stack.push({ .i = rotateL(a.i, getB(++i)) }); break;
 			case         op::jump<>: UPDATE_I(D); continue;
-			case   op::jump<jmp::z>: POP_A if (a.i)   { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::nz>: POP_A if (!a.i)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::li>: POP_BA CMP_I(<)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::gi>: POP_BA CMP_I(>)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::ei>: POP_BA CMP_I(==) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::nei>: POP_BA CMP_I(!=) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::lei>: POP_BA CMP_I(<=) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::gei>: POP_BA CMP_I(>=) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::lf>: POP_BA CMP_F(<)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::gf>: POP_BA CMP_F(>)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::ef>: POP_BA CMP_F(==) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::nef>: POP_BA CMP_F(!=) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::lef>: POP_BA CMP_F(<=) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::gef>: POP_BA CMP_F(>=) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case  op::jump<jmp::ex>: if (ex) { ex = false; UPDATE_I(D); } else SKIP_NEXT(4);
+			case   op::jump<jmp::f>: POP_A if (a.i)  { UPDATE_I(D); } else SKIP_NEXT(4);
+			case   op::jump<jmp::t>: POP_A if (!a.i) { UPDATE_I(D); } else SKIP_NEXT(4);
+			case  op::compare<cmp::li>: POP_BA stack.push({ .i = (a.i  < b.i) }); break;
+			case  op::compare<cmp::gi>: POP_BA stack.push({ .i = (a.i  > b.i) }); break;
+			case  op::compare<cmp::ei>: POP_BA stack.push({ .i = (a.i == b.i) }); break;
+			case op::compare<cmp::nei>: POP_BA stack.push({ .i = (a.i != b.i) }); break;
+			case op::compare<cmp::lei>: POP_BA stack.push({ .i = (a.i <= b.i) }); break;
+			case op::compare<cmp::gei>: POP_BA stack.push({ .i = (a.i >= b.i) }); break;
+			case  op::compare<cmp::lf>: POP_BA stack.push({ .i = (a.f  < b.f) }); break;
+			case  op::compare<cmp::gf>: POP_BA stack.push({ .i = (a.f  > b.f) }); break;
+			case  op::compare<cmp::ef>: POP_BA stack.push({ .i = (a.f == b.f) }); break;
+			case op::compare<cmp::nef>: POP_BA stack.push({ .i = (a.f != b.f) }); break;
+			case op::compare<cmp::lef>: POP_BA stack.push({ .i = (a.f <= b.f) }); break;
+			case op::compare<cmp::gef>: POP_BA stack.push({ .i = (a.f >= b.f) }); break;
+			case op::flag<>: stack.push({ .i = ex }); ex = false; break;
 			case op::call<>:
 				// step 1: save lfp, ret, arity = 0:
 				frame.push({
@@ -253,6 +253,7 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::set<var::g>: POP_A stack.edit(getW(++i),  a); SKIP(2); continue;
 			case op::set<var::l>: POP_A stack.edit(fp + getB(++i),  a); break;
 			case op::set<var::a>: POP_A stack.edit(fp - getB(++i) - 1,  a); break;
+			case      op::swap<>: POP_AB PUSH_AB break;
 		}
 		++i;
 	}

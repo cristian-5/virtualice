@@ -22,11 +22,11 @@
 	cast.d => 0x0D
 	cast.q => 0x0E
 
-	; padding of 0x00
+	; ==========================================
 
-	raise => 0x0F
+	raise => 0x0F ; raise exception flag
 
-	; padding of 0x00
+	; ==========================================
 
 	add.i => 0x10
 	add.f => 0x11
@@ -43,12 +43,12 @@
 	dec.i => 0x1C
 	dec.f => 0x1D
 
-	; padding of 0x00
+	; ==========================================
 
 	convert.to.i => 0x1E
 	convert.to.f => 0x1F
 
-	; padding of 0x00
+	; ==========================================
 
 	and => 0x20
 	or  => 0x21
@@ -65,30 +65,34 @@
 	rotate.r {value: u6} => 0x28 @ value`8
 	rotate.l {value: u6} => 0x29 @ value`8
 
-	; padding of 0x00
+	; ==========================================
 
 	jump {address: u32} => 0x2A @ address`32
 
 	jump.t {address: u32} => 0x2B @ address`32
 	jump.f {address: u32} => 0x2C @ address`32
 
-	jump.i.l {address: u32} => 0x2D @ address`32
-	jump.i.g {address: u32} => 0x2E @ address`32
-	jump.i.e {address: u32} => 0x2F @ address`32
-	jump.i.ne {address: u32} => 0x30 @ address`32
-	jump.i.le {address: u32} => 0x31 @ address`32
-	jump.i.ge {address: u32} => 0x32 @ address`32
+	; ==========================================
 
-	jump.f.l {address: u32} => 0x33 @ address`32
-	jump.f.g {address: u32} => 0x34 @ address`32
-	jump.f.e {address: u32} => 0x35 @ address`32
-	jump.f.ne {address: u32} => 0x36 @ address`32
-	jump.f.le {address: u32} => 0x37 @ address`32
-	jump.f.ge {address: u32} => 0x38 @ address`32
+	compare.i.l  => 0x2D
+	compare.i.g  => 0x2E
+	compare.i.e  => 0x2F
+	compare.i.ne => 0x30
+	compare.i.le => 0x31
+	compare.i.ge => 0x32
 
-	jump.ex {address: u32} => 0x39 @ address`32
+	compare.f.l  => 0x33
+	compare.f.g  => 0x34
+	compare.f.e  => 0x35
+	compare.f.ne => 0x36
+	compare.f.le => 0x37
+	compare.f.ge => 0x38
 
-	; padding of 0x00
+	; ==========================================
+
+	flag => 0x39 ; exception flag
+
+	; ==========================================
 
 	call {address: u32} => 0x3A @ address`32
 	call.l => 0x3B
@@ -98,12 +102,12 @@
 
 	arity {number: u8} => 0x3E @ number`8
 
-	; padding of 0x00
+	; ==========================================
 
 	negate.i => 0x25   ; for completeness
 	negate.f => 0x3F
 
-	; padding of 0x00
+	; ==========================================
 
 	get.g {index: u16} => 0x40 @ index`16
 	get.l {index: u8} => 0x41 @ index`8
@@ -112,6 +116,10 @@
 	set.g {index: u16} => 0x43 @ index`16
 	set.l {index: u8} => 0x44 @ index`8
 	set.a {index: u8} => 0x45 @ index`8
+
+	; ==========================================
+
+	swap => 0x46
 
 }
 
