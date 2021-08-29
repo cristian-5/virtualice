@@ -38,6 +38,8 @@ using std::fputc;
 using std::fputs;
 using std::perror;
 
+class exc { };
+
 static_assert(sizeof(bln) == 1, "Please check the (bln) type alias!");
 static_assert(sizeof(chr) == 1, "Please check the (chr) type alias!");
 static_assert(sizeof(f32) == 4, "Please check the (f32) type alias!");
@@ -87,9 +89,33 @@ static inline str chr_2_str(chr c) {
 	str s; s.push_back(c); return s;
 }
 
+template< typename... Args >
+str format(const chr * format, Args ... args) {
+	siz length = snprintf(nullptr, 0, format, args ...);
+	assert(length >= 0);
+	chr * buf = new chr[length + 1];
+	snprintf(buf, length + 1, format, args ...);
+	str result(buf);
+	delete [] buf;
+	return result;
+}
+
+inline static u64 factorial(u64 n) {
+	static const u64 factorials[] = {
+		1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800,
+		479001600, 6227020800, 87178291200, 1307674368000, 20922789888000,
+		355687428096000, 6402373705728000, 121645100408832000,
+		2432902008176640000
+	};
+	if (n < sizeof(factorials) / sizeof(u64)) return factorials[n];
+	u64 result = n;
+	while (--n) result *= n;
+	return result;
+}
+
 // =============== fast conversion functions ===============
 
-class invalid_number { };
+class invalid_format: exc { };
 
 inline static chr * u2s(u64 u) {
 	// max(u64) = 18446744073709551615
@@ -154,18 +180,62 @@ inline static chr * f2s(f64 f) {
 
 inline static u64 s2u(chr * s) {
 	u64 u = 0;
-	for (i8 i = 0; i < 16; i++) {
-		if (!std::isdigit(s[i])) {
-			throw invalid_number();
+	while (* s) {
+		if (!std::isdigit(* s)) {
+			throw invalid_format();
 		}
-		u = u * 10 + (s[i] - '0');
+		u = u * 10 + (* s - '0');
+		s++;
+	} return u;
+}
+
+inline static u64 d2u(chr * s) {
+	try { return s2u(s); }
+	catch (invalid_format &) { throw; }
+}
+
+inline static u64 b2u(chr * s) {
+	u64 u = 0;
+	while (* s) {
+		if (* s != '1' && * s != '0') {
+			throw invalid_format();
+		}
+		u = (u << 1) | (* s - '0');
+		s++;
+	} return u;
+}
+
+inline static u64 o2u(chr * s) {
+	u64 u = 0;
+	while (* s) {
+		if (* s < '0' || * s > '7') {
+			throw invalid_format();
+		}
+		u = (u << 3) | (* s - '0');
+		s++;
+	} return u;
+}
+
+inline static u64 x2u(chr * s) {
+	u64 u = 0;
+	while (* s) {
+		if (!std::isxdigit(* s)) {
+			throw invalid_format();
+		}
+		u = (u << 4) | (
+			* s <= '9' ?
+			* s - '0' :
+			(* s & 0xDF) - 'A' + 10
+		); s++;
 	} return u;
 }
 
 inline static i64 s2i(chr * s) {
-	if (* s == '-') return - s2u(++s);
-	else if (* s == '+') s++;
-	return s2u(s);
+	try {
+		if (* s == '-') return - s2u(++s);
+		else if (* s == '+') s++;
+		return s2u(s);
+	} catch (invalid_format &) { throw; }
 }
 
 // parses /[+-]?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g
@@ -184,7 +254,22 @@ inline static f64 s2f(chr * s) {
 		return lim<f64>::quiet_NaN();
 	}
 	try { return std::stod(s); }
-	catch (...) { throw invalid_number(); }
+	catch (...) { throw invalid_format(); }
+}
+
+inline static chr * u2x(u64 u) {
+	str result = format("0x%llX", u);
+	chr * copy = (chr *) malloc(result.length() + 1);
+	strcpy(copy, result.c_str());
+	return copy;
+}
+
+inline static chr * f2x(f64 f) {
+	u64 * u = (u64 *) & f;
+	str result = format("0x%016llX", * u);
+	chr * copy = (chr *) malloc(result.length() + 1);
+	strcpy(copy, result.c_str());
+	return copy;
 }
 
 #endif

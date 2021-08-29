@@ -37,14 +37,17 @@ The instruction set is
 
 ; arithmetics: (i = int, f = float)
 
+	factorial
+
 	add.[i|f]
 	sub.[i|f]
 	mul.[i|f]
 	div.[i|f]
 	mod.[i|f]
-
-	increment.[i|f]
-	decrement.[i|f]
+	pow.[i|f]
+	
+	increment
+	decrement
 
 ; bitwise: (l = left, r = right)
 
@@ -75,8 +78,8 @@ The instruction set is
 
 ; exceptions
 
-	raise               ; raises the exception flag
-	jump.ex [address]   ; jump on exception, reset flag
+	raise  ; raises the exception flag
+	flag   ; moves the exception flag on the stack
 
 ; jumps:
 

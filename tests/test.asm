@@ -1,9 +1,21 @@
 
 #include "ice.asm"
 
-push.b 6
-push.b 6
+push.b 8
+convert.to.f
+push.b 5
+convert.to.f
+div.f
 
-compare.i.e
+push.b 6
+convert.to.f
+push.b 7
+convert.to.f
+div.f
 
-call.k debug
+pow.f
+
+call.k f2s
+top
+call.k ostream
+call.k deallocate

@@ -93,7 +93,7 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::cast<typ::w>: stack.push(V_CAST(stack.pop(), W)); break;
 			case op::cast<typ::d>: stack.push(V_CAST(stack.pop(), D)); break;
 			case op::cast<typ::q>: stack.push(V_CAST(stack.pop(), Q)); break;
-			case      op::raise<>: ex = true; break;
+			case  op::factorial<>: stack.push({ .i = factorial(stack.pop().i) }); break;
 			case  op::add<typ::i>: POP_BA stack.push({ .i = a.i + b.i }); break;
 			case  op::add<typ::f>: POP_BA stack.push({ .f = a.f + b.f }); break;
 			case  op::sub<typ::i>: POP_BA stack.push({ .i = a.i - b.i }); break;
@@ -104,10 +104,10 @@ void vm::run(arr<u8> code, u64 p) {
 			case  op::div<typ::f>: POP_BA stack.push({ .f = a.f / b.f }); break;
 			case  op::mod<typ::i>: POP_BA stack.push({ .i = a.i % b.i }); break;
 			case  op::mod<typ::f>: POP_BA stack.push({ .f = F_MOD(a.f, b.f) }); break;
-			case  op::inc<typ::i>: POP_A  stack.push({ .i = a.i + 1 }); break;
-			case  op::inc<typ::f>: POP_A  stack.push({ .f = a.f + 1 }); break;
-			case  op::dec<typ::i>: POP_A  stack.push({ .i = a.i - 1 }); break;
-			case  op::dec<typ::f>: POP_A  stack.push({ .f = a.f - 1 }); break;
+			case  op::pow<typ::i>: POP_BA stack.push({ .i = (u64)((i64)pow(a.i, b.i)) }); break;
+			case  op::pow<typ::f>: POP_BA stack.push({ .f = pow(a.f, b.f) }); break;
+			case  op::increment<>: POP_A  stack.push({ .i = a.i + 1 }); break;
+			case  op::decrement<>: POP_A  stack.push({ .i = a.i - 1 }); break;
 			case  op::convert<typ::i>: POP_A stack.push({ .i = (u64)a.f }); break;
 			case  op::convert<typ::f>: POP_A stack.push({ .f = (f64)a.i }); break;
 			case      op::b_and<>: POP_BA stack.push({ .i = (a.i & b.i) }); break;
@@ -135,7 +135,7 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::compare<cmp::nef>: POP_BA stack.push({ .i = (a.f != b.f) }); break;
 			case op::compare<cmp::lef>: POP_BA stack.push({ .i = (a.f <= b.f) }); break;
 			case op::compare<cmp::gef>: POP_BA stack.push({ .i = (a.f >= b.f) }); break;
-			case op::flag<>: stack.push({ .i = ex }); ex = false; break;
+			case op::swap<>: POP_AB PUSH_AB break;
 			case op::call<>:
 				// step 1: save lfp, ret, arity = 0:
 				frame.push({
@@ -172,16 +172,16 @@ void vm::run(arr<u8> code, u64 p) {
 					case krn::_i2s: stack.push({ .p = i2s(stack.pop().i) }); break;
 					case krn::_s2u:
 						try { stack.push({ .i = s2u((chr *)stack.pop().p) }); }
-						catch (invalid_number) { ex = true; }
+						catch (invalid_format) { ex = true; }
 					break;
 					case krn::_s2i:
 						try { stack.push({ .i = (u64)s2i((chr *)stack.pop().p) }); }
-						catch (invalid_number) { ex = true; }
+						catch (invalid_format) { ex = true; }
 					break;
 					case krn::_f2s: stack.push({ .p = f2s(stack.pop().f) }); break;
 					case krn::_s2f:
 						try { stack.push({ .f = s2f((chr *)stack.pop().p) }); }
-						catch (invalid_number) { ex = true; }
+						catch (invalid_format) { ex = true; }
 					break;
 
 					case krn::allocate:
@@ -253,7 +253,8 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::set<var::g>: POP_A stack.edit(getW(++i),  a); SKIP(2); continue;
 			case op::set<var::l>: POP_A stack.edit(fp + getB(++i),  a); break;
 			case op::set<var::a>: POP_A stack.edit(fp - getB(++i) - 1,  a); break;
-			case      op::swap<>: POP_AB PUSH_AB break;
+			case     op::raise<>: ex = true; break;
+			case      op::flag<>: stack.push({ .i = ex }); ex = false; break;
 		}
 		++i;
 	}
