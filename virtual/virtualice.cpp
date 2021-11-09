@@ -121,8 +121,8 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::rotate<typ::r>: POP_A stack.push({ .i = rotateR(a.i, getB(++i)) }); break;
 			case op::rotate<typ::l>: POP_A stack.push({ .i = rotateL(a.i, getB(++i)) }); break;
 			case         op::jump<>: UPDATE_I(D); continue;
-			case   op::jump<jmp::f>: POP_A if (a.i)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case   op::jump<jmp::t>: POP_A if (!a.i) { UPDATE_I(D); } else SKIP_NEXT(4);
+			case   op::jump<jmp::t>: POP_A if (a.i)  { UPDATE_I(D); } else SKIP_NEXT(4);
+			case   op::jump<jmp::f>: POP_A if (!a.i) { UPDATE_I(D); } else SKIP_NEXT(4);
 			case  op::compare<cmp::li>: POP_BA stack.push({ .i = (a.i  < b.i) }); break;
 			case  op::compare<cmp::gi>: POP_BA stack.push({ .i = (a.i  > b.i) }); break;
 			case  op::compare<cmp::ei>: POP_BA stack.push({ .i = (a.i == b.i) }); break;
@@ -219,7 +219,9 @@ void vm::run(arr<u8> code, u64 p) {
 							puts("- FRAME ----------------------------------------");
 							for (siz j = 0; j < frame.size(); j++) {
 								printf("fp: %llu lfp: %llu ret: %llu arity: %d\n",
-									fp, frame[j].lfp, frame[j].ret, frame[j].ari);
+									fp, frame[j].lfp,
+									frame[j].ret - u64(& code.data[0]),
+									frame[j].ari);
 							}
 						}
 						puts("================================================");
@@ -230,7 +232,20 @@ void vm::run(arr<u8> code, u64 p) {
 					case krn::random: stack.push({ .i = pcg::next() }); break;
 				}
 			break;
-			case op::call<cll::l>: break;
+			case op::call<cll::l>:
+				// step 0: get the address of the function
+				POP_A
+				// step 1: save lfp, ret, arity = 0:
+				frame.push({
+					.lfp = fp,
+					.ret = (u64)(i + 1),
+					.ari = 0
+				});
+				// step 2: set the new fp
+				fp = stack.size();
+				// step 3: jump to the function
+				i = & code.data[u64(a.p) & D_MASK];
+			continue;
 			case op::ret<>: {
 				// step 1: get return value
 				POP_A

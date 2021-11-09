@@ -9,6 +9,8 @@
 	push.d {value} => 0x04 @ value`32
 	push.q {value} => 0x05 @ value`64
 
+	push.a {value} => 0x04 @ value`32
+
 	push.z => 0x06
 	push.o => 0x07
 

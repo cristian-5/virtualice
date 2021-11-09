@@ -27,6 +27,7 @@ The instruction set is
 ; push, pop, cast:
 
 	push.[b|w|d|q]    ; push n bytes
+	push.a [function] ; push function address
 	push.z            ; push 0
 	push.o            ; push 1
 	pop               ; pop a value
