@@ -75,53 +75,66 @@
 
 	; ==========================================
 
-	compare.i.l  => 0x2D
-	compare.i.g  => 0x2E
-	compare.i.e  => 0x2F
-	compare.i.ne => 0x30
-	compare.i.le => 0x31
-	compare.i.ge => 0x32
-
-	compare.f.l  => 0x33
-	compare.f.g  => 0x34
-	compare.f.e  => 0x35
-	compare.f.ne => 0x36
-	compare.f.le => 0x37
-	compare.f.ge => 0x38
+	raise => 0x2D
+	flag  => 0x2E
 
 	; ==========================================
 
-	swap => 0x39
+	swap => 0x2F
 
-	; ==========================================
+	; === PADDING OF 10 INSTRUCTIONS ===========
 
-	call {address: u32} => 0x3A @ address`32
-	call.l => 0x3B
-	call.k {code: u8} => 0x3C @ code`8
+	compare.u.e  => 0x3A
+	compare.u.ne => 0x3B
+	compare.u.l  => 0x3C
+	compare.u.le => 0x3D
+	compare.u.g  => 0x3E
+	compare.u.ge => 0x3F
 
-	return => 0x3D
+	; === PADDING OF 10 INSTRUCTIONS ===========
 
-	arity {number: u8} => 0x3E @ number`8
+	compare.s.e  => 0x4A
+	compare.s.ne => 0x4B
+	compare.s.l  => 0x4C
+	compare.s.le => 0x4D
+	compare.s.g  => 0x4E
+	compare.s.ge => 0x4F
+
+	; === PADDING OF 10 INSTRUCTIONS ===========
+
+	compare.f.e  => 0x5A
+	compare.f.ne => 0x5B
+	compare.f.l  => 0x5C
+	compare.f.le => 0x5D
+	compare.f.g  => 0x5E
+	compare.f.ge => 0x5F
+
+	; === PADDING OF 10 INSTRUCTIONS ===========
+	
+	arity {number: u8} => 0x6A @ number`8
+
+	call {address: u32} => 0x6B @ address`32
+	call.l => 0x6C
+	call.k {code: u8} => 0x6D @ code`8
+
+	return => 0x6E
 
 	; ==========================================
 
 	negate.i => 0x25   ; for completeness
-	negate.f => 0x3F
+	negate.f => 0x6F
 
 	; ==========================================
 
-	get.g {index: u16} => 0x40 @ index`16
-	get.l {index: u8} => 0x41 @ index`8
-	get.a {index: u8} => 0x42 @ index`8
+	get.g {index: u16} => 0x70 @ index`16
+	get.l {index: u8} => 0x71 @ index`8
+	get.a {index: u8} => 0x72 @ index`8
 
-	set.g {index: u16} => 0x43 @ index`16
-	set.l {index: u8} => 0x44 @ index`8
-	set.a {index: u8} => 0x45 @ index`8
+	set.g {index: u16} => 0x73 @ index`16
+	set.l {index: u8} => 0x74 @ index`8
+	set.a {index: u8} => 0x75 @ index`8
 
 	; ==========================================
-
-	raise => 0x46
-	flag  => 0x47
 
 }
 

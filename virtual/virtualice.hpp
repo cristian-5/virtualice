@@ -35,18 +35,12 @@ class jmp {
 
 class cmp {
 	public:
-	TYP li  = 0x0;
-	TYP gi  = 0x1;
-	TYP ei  = 0x2;
-	TYP nei = 0x3;
-	TYP lei = 0x4;
-	TYP gei = 0x5;
-	TYP lf  = 0x6;
-	TYP gf  = 0x7;
-	TYP ef  = 0x8;
-	TYP nef = 0x9;
-	TYP lef = 0xA;
-	TYP gef = 0xB;
+	TYP e  = 0x0;
+	TYP ne = 0x1;
+	TYP l  = 0x2;
+	TYP le = 0x3;
+	TYP g  = 0x4;
+	TYP ge = 0x5;
 };
 
 class cll {
@@ -148,31 +142,38 @@ class op {
 	// ==========================================
 
 	OPC jump    = 0x2A + T; // 3
-	OPC compare = 0x2D + T; // 12
 
 	// ==========================================
 
-	OPC swap = 0x39;
+	OPC raise = 0x2D;
+	OPC flag  = 0x2E;
 
 	// ==========================================
 
-	OPC call  = 0x3A + T; // 3
-	OPC ret   = 0x3D;
-	OPC arity = 0x3E;
+	OPC swap = 0x2F;
+
+	// === PADDING OF 10 INSTRUCTIONS ===========
+
+	OPC compare_u = 0x3A + T; // 6, padding of 10
+	OPC compare_s = 0x4A + T; // 6, padding of 10
+	OPC compare_f = 0x5A + T; // 6, padding of 10
+
+	// === PADDING OF 10 INSTRUCTIONS ===========
+
+	OPC arity = 0x6A;
+	OPC call  = 0x6B + T; // 3
+	OPC ret   = 0x6E;
 
 	// ==========================================
 
-	OPC negate = 0x3F;
+	OPC negate = 0x6F;
 
 	// ==========================================
 
-	OPC get  = 0x40 + T; // 3
-	OPC set  = 0x43 + T; // 3
+	OPC get  = 0x70 + T; // 3
+	OPC set  = 0x73 + T; // 3
 
 	// ==========================================
-
-	OPC raise = 0x46;
-	OPC flag  = 0x47;
 
 };
 

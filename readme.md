@@ -89,7 +89,7 @@ The instruction set is
 
 ; compare:
 
-	compare.[i|f].[e|ne|ge|le|g|l]
+	compare.[s|u|f].[e|ne|ge|le|g|l]
 
 ```
 
