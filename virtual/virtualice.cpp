@@ -271,10 +271,10 @@ void vm::run(arr<u8> code, u64 p) {
 				// step 6: jump to return address
 				i = (u8 *)current.ret;
 			} continue;
-			case    op::negate<>: POP_A stack.push({ .f = - a.f }); break;
-			case op::get<var::g>: stack.push(stack.at(getW(++i))); SKIP(2); continue;
-			case op::get<var::l>: stack.push(stack.at(fp + getB(++i))); break;
-			case op::get<var::a>: stack.push(stack.at(fp - getB(++i) - 1)); break;
+			case    op::negate<>: POP_A PUSH({ .f = - a.f }); break;
+			case op::get<var::g>: PUSH(stack.at(getW(++i))); SKIP(2); continue;
+			case op::get<var::l>: PUSH(stack.at(fp + getB(++i))); break;
+			case op::get<var::a>: PUSH(stack.at(fp - getB(++i) - 1)); break;
 			case op::set<var::g>: POP_A stack.edit(getW(++i),  a); SKIP(2); continue;
 			case op::set<var::l>: POP_A stack.edit(fp + getB(++i),  a); break;
 			case op::set<var::a>: POP_A stack.edit(fp - getB(++i) - 1,  a); break;
@@ -293,6 +293,8 @@ void vm::run(arr<u8> code, u64 p) {
 #undef POP_A
 #undef POP_BA
 #undef POP_AB
+
+#undef PUSH
 
 #undef PUSH_A
 #undef PUSH_B
