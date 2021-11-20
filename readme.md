@@ -8,14 +8,27 @@ Supports threads, exceptions, and kernel extensions.
 
 The architecture is capable of executing operations on 64bit integers
 and 64bit floating point numbers. The instruction addresses are 32bit
-long. Jumps are absolute. Function variables, function parameters are
-restricted to a maximum addressing of 2^8 (256 variables). Global
-variables are restricted to a maximum addressing of 2^16.
+long. Jumps are absolute. Function variables, function parameters and
+global variables are restricted to a maximum addressing of 2^16.
+
+When a call occurs, a new scope gets generated automatically. It is a
+function's responsibility to move the parameters from the stack into
+the scope using `param.[b|w] $name`. The `return` instruction will
+automatically drop the current scope, invoking the garbage collector.
+
+Variable shadowing is automatically implemented and if `local.[b|w].g $name`
+does not find the variable in the local scope, it will be fetched from
+the global scope if present. If not found then undefined behaviour.
+For variable shadowing to properly work the varible names should be
+the same for varibles that share the same identifier.
+
+Global variables are thread shared and thread safe.
+
+It is possible to force the creation of a new scope with the instruction
+`scope.c` and the deletion follows `scope.d`. A scope deletion will
+always invoke the garbage collector.
 
 ### Instruction Set
-
-We are currently working on this.
-The instruction set is 
 
 ``` asm
 
@@ -66,16 +79,31 @@ The instruction set is
 
 ; functions, threads, exceptions:
 
-	arity    [number]   ; set function arity
-	call     [function]
-	call.l
 	call.k   [function] ; call to kernel
+	call     [function]
+	call.l              ; indirect 'lamda' call
+	
 	return
 
-; variables: (l = local, g = global, a = argument)
+; variables:
 
-	get.[l|g|a] [variable index]
-	set.[l|g|a] [variable index]
+	; the variable name is numeric
+	; [b|w] refers to the name length in bytes
+
+	global.[b|w].c [variable name] ; create global var
+	global.[b|w].d [variable name] ; delete global var
+	global.[b|w].g [variable name] ; get global var
+	global.[b|w].s [variable name] ; set global var
+
+	local.[b|w].c [variable name] ; create local var
+	local.[b|w].d [variable name] ; delete local var
+	local.[b|w].g [variable name] ; get local var
+	local.[b|w].s [variable name] ; set local var
+
+	param.[b|w]   [variable name] ; make a parameter
+
+	scope.c ; create scope
+	scope.d ; delete scope
 
 ; exceptions
 
@@ -89,7 +117,8 @@ The instruction set is
 
 ; compare:
 
-	compare.[s|u|f].[e|ne|ge|le|g|l]
+	compare.[i|f].[e|ne]
+	compare.[s|u|f].[ge|le|g|l]
 
 ```
 
@@ -138,16 +167,16 @@ The instruction set is
 
 ### Memory management functions
 
-| HEX | Prototype                               | Description                                         |
-|:---:|:---------------------------------------:|:----------------------------------------------------|
-|`A7` | `allocate(n: u64): [*];`                | *Allocates `n` bytes and returns the new address.*  |
-|`DA` | `deallocate(p: [*]);`                   | *Deallocates memory from address `p`.*              |
-|`2A` | `reallocate(p: [*], n: u64): [*];`      | *Reallocates `n` bytes trying to resize `p`.*       |
-|`C0` | `copy(s: [*], d: [*], n: u64): [*];`    | *Copies `n` bytes from `s` to `d`.*                 |
-|`70` | `load(s: u32, d: [*], n: u64): [*];`    | *Loads `n` bytes from code index `s` to `d`.*       |
-|`00` | `zeros(p: [*], n: u64): [*];`           | *Writes `0` to `p`, for `n` consecutive bytes.*     |
-|`F1` | `fill(b: byt, p: [*], n: u64): [*];`    | *Fills `p` with `b`, for `n` consecutive bytes.*    |
-|`C2` | `compare(a: [*], b: [*], n: u64): [*];` | *Compares `a` with `b`, for `n` consecutive bytes.* |
+| HEX | Prototype                               | Description                                      |
+|:---:|:---------------------------------------:|:-------------------------------------------------|
+|`A7` | `allocate(n: u64): [*];`                | *Allocates `n` bytes, returns the new address.*  |
+|`DA` | `deallocate(p: [*]);`                   | *Deallocates memory from address `p`.*           |
+|`2A` | `reallocate(p: [*], n: u64): [*];`      | *Reallocates `n` bytes trying to resize `p`.*    |
+|`C0` | `copy(s: [*], d: [*], n: u64): [*];`    | *Copies `n` bytes from `s` to `d`.*              |
+|`70` | `load(s: u32, d: [*], n: u64): [*];`    | *Loads `n` bytes from code index `s` to `d`.*    |
+|`00` | `zeros(p: [*], n: u64): [*];`           | *Writes `0` to `p`, for `n` consecutive bytes.*  |
+|`F1` | `fill(b: byt, p: [*], n: u64): [*];`    | *Fills `p` with `b`, for `n` consecutive bytes.* |
+|`C2` | `compare(a: [*], b: [*], n: u64): [*];` | *Compares `a`, `b`, for `n` consecutive bytes.*  |
 
 > The usage of unallocated or unowned memory will cause
 > a bad access fault resulting in a immediate crash.

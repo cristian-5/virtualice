@@ -3,6 +3,7 @@
 #define VIRTUALICE_HPP
 
 #include <mutex>
+#include <unordered_map>
 
 #include "../tools/ice.hpp"
 #include "../tools/arr.hpp"
@@ -45,15 +46,27 @@ class cmp {
 
 class cll {
 	public:
-	TYP l = 1;
-	TYP k = 2;
+	TYP k = 0;
+	TYP c = 1;
+	TYP l = 2;
 };
 
 class var {
 	public:
-	TYP g = 0;
-	TYP l = 1;
-	TYP a = 2;
+	TYP bc = 0;
+	TYP bd = 1;
+	TYP bg = 2;
+	TYP bs = 3;
+	TYP wc = 4;
+	TYP wd = 5;
+	TYP wg = 6;
+	TYP ws = 7;
+};
+
+class scp {
+	public:
+	TYP c = 0;
+	TYP d = 1;
 };
 
 class krn {
@@ -160,18 +173,21 @@ class op {
 
 	// === PADDING OF 10 INSTRUCTIONS ===========
 
-	OPC arity = 0x6A;
-	OPC call  = 0x6B + T; // 3
-	OPC ret   = 0x6E;
+	OPC call  = 0x6A + T; // 3
+	OPC ret   = 0x6D;
 
-	// ==========================================
+	// === PADDING OF 01 INSTRUCTIONS ===========
 
 	OPC negate = 0x6F;
 
 	// ==========================================
 
-	OPC get  = 0x70 + T; // 3
-	OPC set  = 0x73 + T; // 3
+	OPC global = 0x70 + T; // 8
+	OPC local  = 0x78 + T; // 8
+
+	// padding of 9 instructions
+
+	OPC scope  = 0x8C + T; // 2
 
 	// ==========================================
 
@@ -211,7 +227,49 @@ class vm {
 	[[gnu::always_inline]]
 	inline static u8  getB(void * p);
 
-	static std::mutex critical;
+	static mtx critical, global;
+
+	static map<u16, val> globals;
+
+	class scope {
+		public:
+		scope * parent = nullptr;
+		map<u16, val> locals;
+		scope() = default;
+		scope(scope * p) { parent = p; };
+		inline void add(u16 i, val v) {
+			locals.insert({ i, v });
+		}
+		inline void del(u16 i) {
+			auto search = locals.find(i);
+			if (search != locals.end()) locals.erase(search);
+			else if (parent) parent -> del(i);
+			else {
+				global.lock();
+				globals.erase(i);
+				global.unlock();
+			}
+		}
+		inline val get(u16 i) {
+			auto search = locals.find(i);
+			if (search != locals.end()) return search -> second;
+			if (parent) return parent -> get(i);
+			global.lock();
+			val v = globals[i];
+			global.unlock();
+			return v;
+		}
+		inline void set(u16 i, val v) {
+			auto search = locals.find(i);
+			if (search != locals.end()) locals[i] = v;
+			else if (parent) parent -> set(i, v);
+			else {
+				global.lock();
+				globals[i] = v;
+				global.unlock();
+			}
+		}
+	};
 
 	public:
 

@@ -3,37 +3,40 @@
 
 main:
 
-    push.q      10
-    push.a      fibonacci
-    call.l      ; lambda call
-	call.k      debug       ; should print 55
+	push.b 10
+	push.a fibonacci
+	call.l
+	call.k debug
 	halt
 
-; let fibonacci = ƒ(n: nat) -> nat
-fibonacci: n = 0 ; n is the argument 0
+fibonacci:
 
-	arity     1           ; number of arguments
-	
-    get.a     n           ; get n
+	param.b $n    ; make parameter $n
+
+	local.b.g $n  ; get $n
 	push.b    2
+	compare.u.l   ; if n < 2: base case
+	jump.t base_case
 
-    compare.i.l
-	jump.t    base_case   ; if (n < 2) jump base_case
-						  ; else:
-	get.a     n           ; get n
-	decrement             ; n - 1
-	push.a    fibonacci
-    call.l
+	local.b.g $n  ; get $n
+	decrement     ; $n--
+	push.a fibonacci
+	call.l
 
-	get.a     n           ; get n
+	local.b.g $n  ; get $n
 	decrement
-	decrement             ; n - 2
-	push.a    fibonacci
-    call.l
+	decrement     ; $n = $n - 2
+	push.a fibonacci
+	call.l
 
-	add.i                 ; add the 2 calls
+	add.i
 	return
 
 	base_case:
-        get.a     n
-        return            ; else return n
+	
+		local.b.g $n
+		return
+
+
+; varibles table
+$n = 0x2A

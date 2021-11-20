@@ -94,7 +94,7 @@
 	; === PADDING OF 10 INSTRUCTIONS ===========
 
 	compare.s.e  => 0x4A
-	compare.s.ne => 0x4B
+	compare.s.ne => 0x4B 
 	compare.s.l  => 0x4C
 	compare.s.le => 0x4D
 	compare.s.g  => 0x4E
@@ -109,30 +109,54 @@
 	compare.f.g  => 0x5E
 	compare.f.ge => 0x5F
 
-	; === PADDING OF 10 INSTRUCTIONS ===========
-	
-	arity {number: u8} => 0x6A @ number`8
+	; ==========================================
 
+	compare.i.e  => 0x3A    ; for completeness
+	compare.i.ne => 0x3B    ; for completeness
+	compare.f.e  => 0x5A    ; for completeness
+	compare.f.ne => 0x5B    ; for completeness
+
+	; === PADDING OF 10 INSTRUCTIONS ===========
+
+	call.k {code: u8} => 0x6A @ code`8
 	call {address: u32} => 0x6B @ address`32
 	call.l => 0x6C
-	call.k {code: u8} => 0x6D @ code`8
+	return => 0x6D
 
-	return => 0x6E
-
-	; ==========================================
+	; === PADDING OF 01 INSTRUCTIONS ===========
 
 	negate.i => 0x25   ; for completeness
 	negate.f => 0x6F
 
 	; ==========================================
 
-	get.g {index: u16} => 0x70 @ index`16
-	get.l {index: u8} => 0x71 @ index`8
-	get.a {index: u8} => 0x72 @ index`8
+	global.b.c {name: u8} => 0x70 @ name`8
+	global.b.d {name: u8} => 0x71 @ name`8
+	global.b.g {name: u8} => 0x72 @ name`8
+	global.b.s {name: u8} => 0x73 @ name`8
 
-	set.g {index: u16} => 0x73 @ index`16
-	set.l {index: u8} => 0x74 @ index`8
-	set.a {index: u8} => 0x75 @ index`8
+	global.w.c {name: u16} => 0x74 @ name`16
+	global.w.d {name: u16} => 0x75 @ name`16
+	global.w.g {name: u16} => 0x76 @ name`16
+	global.w.s {name: u16} => 0x77 @ name`16
+
+	local.b.c {name: u8} => 0x78 @ name`8
+	local.b.d {name: u8} => 0x79 @ name`8
+	local.b.g {name: u8} => 0x7A @ name`8
+	local.b.s {name: u8} => 0x7B @ name`8
+
+	local.w.c {name: u16} => 0x7C @ name`16
+	local.w.d {name: u16} => 0x7D @ name`16
+	local.w.g {name: u16} => 0x7E @ name`16
+	local.w.s {name: u16} => 0x7F @ name`16
+
+	param.b {name: u8} => 0x78 @ name`8   ; for completeness
+	param.w {name: u16} => 0x7C @ name`16 ; for completeness
+
+	; padding of 9 instructions
+
+	scope.c => 0x8C
+	scope.d => 0x8D
 
 	; ==========================================
 

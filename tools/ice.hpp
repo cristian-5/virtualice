@@ -29,6 +29,7 @@ using f32 = float;
 using f64 = double;
 
 #define map std::unordered_map
+#define mtx std::mutex
 #define str std::string
 #define vec std::vector
 

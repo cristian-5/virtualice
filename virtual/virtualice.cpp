@@ -68,16 +68,19 @@ u8  vm::getB(void * p) { return (* ((u8  *)p)) & B_MASK; }
 
 #undef PU8
 
-mutex vm::critical;
+mtx vm::critical;
+mtx vm::global;
+
+map<u16, val> vm::globals;
 
 void vm::run(arr<u8> code, u64 p) {
 	u8 * i = & code.data[p];
 	stk<val> stack;
-	stk<cal> frame;
+	stk<u8*> frame;
 	val a, b;
-	siz fp = 0;
 	bln ex = false;
 	pcg::seed((u64)time(nullptr));
+	scope * current_scope = new scope();
 	while (true) {
 		switch (* i) {
 			case op::halt<>: exit(0);
@@ -146,19 +149,6 @@ void vm::run(arr<u8> code, u64 p) {
 			case op::compare_f<cmp::le>: POP_BA PUSH({ .i = (a.f <= b.f) }); break;
 			case op::compare_f<cmp::g> : POP_BA PUSH({ .i = (a.f  > b.f) }); break;
 			case op::compare_f<cmp::ge>: POP_BA PUSH({ .i = (a.f >= b.f) }); break;
-			case op::arity<>: frame.top().ari = getB(++i); break;
-			case op::call<>:
-				// step 1: save lfp, ret, arity = 0:
-				frame.push({
-					.lfp = fp,
-					.ret = (u64)(i + 5),
-					.ari = 0
-				});
-				// step 2: set the new fp
-				fp = stack.size();
-				// step 3: jump to the function
-				i = & code.data[getD(++i) & D_MASK];
-			continue;
 			case op::call<cll::k>:
 				switch (getB(++i)) {
 					case krn::estream: e_stream(stack.pop().p); break;
@@ -226,16 +216,17 @@ void vm::run(arr<u8> code, u64 p) {
 						for (siz j = 0; j < stack.size(); j++) {
 							printf("%llu\n", stack[j].i);
 						}
-						if (!frame.isEmpty()) {
+						/*if (!frame.isEmpty()) {
 							puts("- FRAME ----------------------------------------");
 							for (siz j = 0; j < frame.size(); j++) {
-								printf("fp: %llu lfp: %llu ret: %llu arity: %d\n",
+								printf("ret: %llu scp: %llu\n",
 									fp, frame[j].lfp,
 									frame[j].ret - u64(& code.data[0]),
 									frame[j].ari);
 							}
-						}
+						}*/
 						puts("================================================");
+						fflush(stdout);
 					break;
 					case krn::sign: stack.push({ .p = sign(stack.pop().i) }); break;
 					case krn::time: stack.push({ .i = (u64)time(nullptr) }); break;
@@ -243,41 +234,91 @@ void vm::run(arr<u8> code, u64 p) {
 					case krn::random: stack.push({ .i = pcg::next() }); break;
 				}
 			break;
+			case op::call<cll::c>:
+				// step 0: save return address:
+				frame.push(i + 5);
+				// step 1: new scope:
+				current_scope = new scope(current_scope);
+				// step 2: jump to the function
+				i = & code.data[getD(++i) & D_MASK];
+			continue;
 			case op::call<cll::l>:
 				// step 0: get the address of the function
 				POP_A
-				// step 1: save lfp, ret, arity = 0:
-				frame.push({
-					.lfp = fp,
-					.ret = (u64)(i + 1),
-					.ari = 0
-				});
-				// step 2: set the new fp
-				fp = stack.size();
+				// step 1: save return address:
+				frame.push(i + 1);
+				// step 2: new scope:
+				current_scope = new scope(current_scope);
 				// step 3: jump to the function
 				i = & code.data[u64(a.p) & D_MASK];
 			continue;
 			case op::ret<>: {
-				// step 1: get return value
+				scope * tmp = current_scope;
+				current_scope = current_scope -> parent;
+				delete tmp;
+			} i = frame.pop(); continue;
+			case op::negate<>: POP_A PUSH({ .f = - a.f }); break;
+			case op::global<var::bc>:
 				POP_A
-				// step 2: pop frame
-				const cal current = frame.pop();
-				// step 3: pop parameters and variables
-				stack.decreaseTo(fp - current.ari);
-				// step 4: reset fp
-				fp = current.lfp;
-				// step 5: push return value
-				PUSH_A
-				// step 6: jump to return address
-				i = (u8 *)current.ret;
-			} continue;
-			case    op::negate<>: POP_A PUSH({ .f = - a.f }); break;
-			case op::get<var::g>: PUSH(stack.at(getW(++i))); SKIP(2); continue;
-			case op::get<var::l>: PUSH(stack.at(fp + getB(++i))); break;
-			case op::get<var::a>: PUSH(stack.at(fp - getB(++i) - 1)); break;
-			case op::set<var::g>: POP_A stack.edit(getW(++i),  a); SKIP(2); continue;
-			case op::set<var::l>: POP_A stack.edit(fp + getB(++i),  a); break;
-			case op::set<var::a>: POP_A stack.edit(fp - getB(++i) - 1,  a); break;
+				global.lock();
+				globals.insert({ getB(++i), a });
+				global.unlock();
+			break;
+			case op::global<var::bd>:
+				global.lock();
+				globals.erase(getB(++i));
+				global.unlock();
+			break;
+			case op::global<var::bg>:
+				global.lock();
+				PUSH(globals[getB(++i)]);
+				global.unlock();
+			break;
+			case op::global<var::bs>:
+				POP_A
+				global.lock();
+				globals[getB(++i)] = a;
+				global.unlock();
+			break;
+			case op::global<var::wc>:
+				POP_A global.lock();
+				globals.insert({ getB(++i), a });
+				global.unlock();
+				SKIP(2);
+			continue;
+			case op::global<var::wd>:
+				global.lock();
+				globals.erase(getW(++i));
+				global.unlock();
+				SKIP(2);
+			continue;
+			case op::global<var::wg>:
+				global.lock();
+				PUSH(globals[getW(++i)]);
+				global.unlock();
+				SKIP(2);
+			continue;
+			case op::global<var::ws>:
+				POP_A
+				global.lock();
+				globals[getW(++i)] = a;
+				global.unlock();
+				SKIP(2);
+			continue;
+			case op::local<var::bc>: POP_A current_scope -> add(getB(++i), a); break;
+			case op::local<var::bd>: current_scope -> del(getB(++i)); break;
+			case op::local<var::bg>: PUSH(current_scope -> get(getB(++i))); break;
+			case op::local<var::bs>: POP_A current_scope -> set(getB(++i), a); break;
+			case op::local<var::wc>: POP_A current_scope -> add(getW(++i), a); SKIP(2); continue;
+			case op::local<var::wd>: current_scope -> del(getW(++i)); SKIP(2); continue;
+			case op::local<var::wg>: PUSH(current_scope -> get(getW(++i))); SKIP(2); continue;
+			case op::local<var::ws>: POP_A current_scope -> set(getW(++i), a); SKIP(2); continue;
+			case op::scope<scp::c>: current_scope = new scope(current_scope); break;
+			case op::scope<scp::d>: {
+				scope * tmp = current_scope;
+				current_scope = current_scope -> parent;
+				delete tmp;
+			} break;
 		}
 		++i;
 	}
