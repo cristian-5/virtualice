@@ -62,7 +62,7 @@ class stk {
 
 	void decreaseTo(siz index) { count = index; }
 
-	bln isEmpty() { return !count; }
+	bln is_empty() { return !count; }
 
 	siz size() { return count; }
 

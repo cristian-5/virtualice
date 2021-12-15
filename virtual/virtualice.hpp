@@ -72,9 +72,9 @@ class scp {
 class krn {
 	public:
 
-	TYP estream = 0x66;
-	TYP ostream = 0x55;
-	TYP istream = 0x44;
+	TYP estream = 0xE5;
+	TYP ostream = 0x05;
+	TYP istream = 0x15;
 
 	TYP fork      = 0xF0;
 	TYP join      = 0xEF;

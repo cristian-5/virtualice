@@ -128,9 +128,9 @@ always invoke the garbage collector.
 
 | HEX | Prototype           | Description                                                  |
 |:---:|:-------------------:|:-------------------------------------------------------------|
-|`66` | `estream([chr]);`   | *Prints the null terminated string to `stderr`.*             |
-|`55` | `ostream([chr]);`   | *Prints the null terminated string to `stdout`.*             |
-|`44` | `istream(): [chr];` | *Waits for the enter key, returns the last line of `stdin`.* |
+|`E5` | `estream([chr]);`   | *Prints the null terminated string to `stderr`.*             |
+|`05` | `ostream([chr]);`   | *Prints the null terminated string to `stdout`.*             |
+|`15` | `istream(): [chr];` | *Waits for the enter key, returns the last line of `stdin`.* |
 
 ### Threading management functions
 

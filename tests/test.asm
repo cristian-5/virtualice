@@ -3,40 +3,41 @@
 
 main:
 
-	push.b 10
-	push.a fibonacci
-	call.l
-	call.k debug
-	halt
+    push.a function_1
+    global.b.c $inc
+    push.z
+    local.b.g $inc
+    call.l
+    call.k debug
+    pop
+    push.a function_2
+    local.b.s $inc
+    push.b 5
+    local.b.g $inc
+    call.l
+    call.k debug
+    pop
 
-fibonacci:
+    halt
 
-	param.b $n    ; make parameter $n
+function_1:
 
-	local.b.g $n  ; get $n
-	push.b    2
-	compare.u.l   ; if n < 2: base case
-	jump.t base_case
+    param.b $x
+    local.b.g $x
+    push.o
+    add.i
+    return
 
-	local.b.g $n  ; get $n
-	decrement     ; $n--
-	push.a fibonacci
-	call.l
+function_2:
 
-	local.b.g $n  ; get $n
-	decrement
-	decrement     ; $n = $n - 2
-	push.a fibonacci
-	call.l
-
-	add.i
-	return
-
-	base_case:
-	
-		local.b.g $n
-		return
+    param.b $x
+    local.b.g $x
+    push.b 2
+    add.i
+    return
 
 
-; varibles table
-$n = 0x2A
+table_of_names:
+
+    $inc = 0x01
+    $x = 0x00
