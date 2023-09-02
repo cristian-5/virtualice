@@ -8,28 +8,28 @@ main:
 	call.k    debug       ; should print 55
 	halt
 
-; func fibonacci(n: Natural): Natural;
 fibonacci: n = 0 ; n is the argument 0
 
-	arity     1           ; number of arguments
+	param.b   n
 
-	get.a     n           ; get n
+	local.b.g n           ; get n
 	push.b    2
 
-	jump.i.l  base_case   ; if (n < 2) jump base_case
+	compare.u.l           ; if (n < 2) jump base_case
+	jump.t base_case
 						  ; else:
-	get.a     n           ; get n
-	dec.i                 ; n - 1
+	local.b.g  n          ; get n
+	decrement             ; n - 1
 	call      fibonacci
 
-	get.a     n           ; get n
-	dec.i
-	dec.i                 ; n - 2
+	local.b.g  n          ; get n
+	decrement
+	decrement             ; n - 2
 	call      fibonacci
 
 	add.i                 ; add the 2 calls
 	return
 
 	base_case:
-	get.a     n
-	return                ; else return n
+		local.b.g  n
+		return            ; else return n

@@ -1,59 +1,87 @@
 
 #include "ice.asm"
 
-push.b    6
-call      factorial
-call.k    debug
-halt
+STRPTR = 0
+; allocate enough memory:
+push.b     string_0_length
+call.k     allocate
+global.b.c STRPTR            ; store allocation ptr
 
-; let factorial = ƒ(n: nat): nat
-factorial: n = 0
+; load the string in memory:
+push.b     string_0_length   ; number of bytes to copy
+global.b.g STRPTR            ; get allocation ptr (destination)
+push.d     string_0          ; code pointer (source)
+call.k     load              ; fun load(s: u32, d: *, n: u64): *;
 
-	arity     1           ; number of arguments
-	push.o                ; temporary variable (f)
-
-	_while__A:
-	
-		get.a     n           ; get n
-		top
-		; if (n == 1) stop:
-		push.o
-		jump.i.e    _end_while__A
-		; else:
-		top
-		get.l       0     ; local variable 0 (f)
-		mul.i             ; f * n
-		set.l       0     ; f = f * n
-		dec.i             ; n--
-		set.a       n
-		jump        _while__A
-
-	_end_while__A:
-
-	pop
-	get.l         0 ; f
-	return
-
-end_factorial:
-
-halt
+; print the string and cleanup:
+global.b.g STRPTR            ; get allocation ptr
+top                          ; duplicate string pointer
+call.k    ostream
+call.k    deallocate         ; deallocate leftover pointer
 
 ; --------------------------------
 
-r_factorial:
-	arity      1
-	get.a      0
-	push.o
-	jump.i.e   r_factorial_bc
-	get.a      0
+call.k    istream            ; get user input
+call.k    s2i                ; convert string to integer
+
+flag                         ; get exception flag
+jump.f    main               ; if (flag == 0) goto main
+
+; print error message:
+
+; allocate enough memory:
+push.b     string_1_length
+call.k     allocate
+global.b.s STRPTR            ; store allocation ptr
+
+; load the string in memory:
+push.b     string_1_length   ; number of bytes to copy
+global.b.g STRPTR            ; get allocation ptr (destination)
+push.d     string_1          ; code pointer (source)
+call.k     load              ; fun load(s: u32, d: *, n: u64): *;
+
+; print the string and cleanup:
+global.b.g STRPTR            ; get allocation ptr
+top                          ; duplicate string pointer
+call.k    ostream
+call.k    deallocate         ; deallocate leftover pointer
+
+halt
+
+main:
+
+	call      factorial
+	call.k    i2s
 	top
-	dec.i
-	call       r_factorial
-	mul.i
-	return
-	r_factorial_bc: ; base case
-		push.o
-		return
-r_factorial_end:
+	call.k    ostream
+	call.k    deallocate
+	halt
 
 ; --------------------------------
+
+factorial: n = 0
+	param.b n
+	local.b.g n  ; get n
+	push.o       ; push 1
+	compare.i.e  ; if (n == 1) goto base case
+	jump.t       factorial_bc
+	local.b.g n  ; get n
+	top          ; duplicate n
+	decrement    ; n - 1
+	call         factorial
+	mul.i        ; n * factorial(n - 1)
+	return
+	factorial_bc: ; base case
+		push.o      ; push 1
+		return      ; return 1
+factorial_end:
+
+; --------------------------------
+
+string_0:
+	#d "insert integer: ", 0x00
+	string_0_length = $ - string_0
+
+string_1:
+	#d "invalid integer!\n", 0x00
+	string_1_length = $ - string_0
