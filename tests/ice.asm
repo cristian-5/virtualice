@@ -158,6 +158,71 @@
 	scope.c => 0x8C
 	scope.d => 0x8D
 
+	; padding of ALOT instructions
+
+	; === COMPLEX INSTRUCTIONS =================
+
+	complex.f => 0xC0
+	complex.i => 0xC1
+	
+	project.r => 0xC3 ; project to real part
+	project.i => 0xC4 ; project to imaginary part
+
+	; padding of 6 instructions
+	
+	add.c => 0xCA
+	sub.c => 0xCB
+	mul.c => 0xCC
+	div.c => 0xCD
+
+	conjugate => 0xCE
+
+	; === MATH FUNCTIONS =======================
+
+	math.i       => 0xCF
+	math.e       => 0xD0
+	math.ln10    => 0xD1
+	math.ln2     => 0xD2
+	math.log10e  => 0xD3
+	math.log2e   => 0xD4
+	math.pi      => 0xD5
+	math.sqrt1_2 => 0xD6
+	math.sqrt2   => 0xD7
+	math.egamma  => 0xD8
+	math.phi	 => 0xD9
+
+	math.abs   => 0xDA
+	math.acos  => 0xDB
+	math.acosh => 0xDC
+	math.asin  => 0xDD
+	math.asinh => 0xDE
+	math.atan  => 0xDF
+	math.atan2 => 0xE0
+	math.atanh => 0xE1
+	math.cbrt  => 0xE2
+	math.ceil  => 0xE3
+	math.cos   => 0xE4
+	math.cosh  => 0xE5
+	math.exp   => 0xE6
+	math.expm1 => 0xE7
+	math.floor => 0xE8
+	math.hypot => 0xE9
+	math.log   => 0xEA
+	math.log1p => 0xEB
+	math.log10 => 0xEC
+	math.log2  => 0xED
+	math.max   => 0xEE
+	math.min   => 0xEF
+	math.pow   => 0xF0
+	math.round => 0xF1
+	math.sign  => 0xF2
+	math.sin   => 0xF3
+	math.sinh  => 0xF4
+	math.sqrt  => 0xF5
+	math.tan   => 0xF6
+	math.tanh  => 0xF7
+	math.trunc => 0xF8
+
 	; ==========================================
 
 }

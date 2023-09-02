@@ -4,16 +4,16 @@
 
 #include "ice.hpp"
 
-// PCG Based on Professor's Melissa E. O'Neill research.
+// PCG Based on Ph.D. Professor Melissa E. O'Neill research.
 
 class pcg {
 
 	private:
 
-		static const u64 n = 6364136223846793005;
-		static const u64 inc = 0xDA3E39CB94B95BDB;
-		inline static u64 state = 0x853C49E6748FEA9B;
-		static const u64 s = 0xC20580B23E7C23FB;
+		static const u64 n = 6364237223846893005;
+		static const u64 inc = 0xDA3E39AB94B95BDB;
+		inline static u64 state = 0x953C49E3748FEA9B;
+		static const u64 s = 0xD20580F23E7CE3FB;
 
 	public:
 
@@ -26,7 +26,7 @@ class pcg {
 	}
 
 	static void seed(u64 s) {
-		state = 0x8788A81453C0274A ^ s;
+		state = 0x878BA8145FC0274A ^ s;
 	}
 
 };

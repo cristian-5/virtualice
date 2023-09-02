@@ -9,6 +9,7 @@
 #include "../tools/arr.hpp"
 #include "../tools/stk.hpp"
 #include "../tools/pcg.hpp"
+#include "../tools/cpx.hpp"
 
 #define TYP static constexpr u8
 #define OPC template <u8 T = 0> TYP
@@ -26,6 +27,13 @@ class typ {
 	TYP n = 1;
 	TYP i = 0;
 	TYP f = 1;
+};
+
+class dtp {
+	public:
+	TYP r = 0xC3; // real
+	TYP i = 0xC4; // imaginary
+	TYP c = 0xC0; // complex
 };
 
 class jmp {
@@ -100,13 +108,58 @@ class krn {
 	TYP compare    = 0xC2;
 
 	TYP debug  = 0xDE;
-	TYP sign   = 0x51;
 	TYP time   = 0x71;
 	TYP seed   = 0x5E;
 	TYP random = 0x3A;
 
 	TYP factorial = 0xFA;
 
+};
+
+enum fun: u8 {
+	_i_ = 0,
+	_e_,
+	_ln10_,
+	_ln2_,
+	_log10e_,
+	_log2e_,
+	_pi_,
+	_sqrt1_2_,
+	_sqrt2_,
+	_egamma_,
+	_phi_,
+
+	_abs_,
+	_acos_,
+	_acosh_,
+	_asin_,
+	_asinh_,
+	_atan_,
+	_atan2_,
+	_atanh_,
+	_cbrt_,
+	_ceil_,
+	_cos_,
+	_cosh_,
+	_exp_,
+	_expm1_,
+	_floor_,
+	_hypot_,
+	_log_,
+	_log1p_,
+	_log10_,
+	_log2_,
+	_max_,
+	_min_,
+	_pow_,
+	_round_,
+	_sign_,
+	_sin_,
+	_sinh_,
+	_sqrt_,
+	_tan_,
+	_tanh_,
+	_trunc_,
 };
 
 class op {
@@ -116,7 +169,8 @@ class op {
 	OPC halt = 0x00;
 	OPC rest = 0x01;
 
-	OPC push = 0x02 + T; // 6
+	// adjusted for complex numbers:
+	OPC push = T == dtp::c ? 0xCF : 0x02 + T; // 6
 	OPC pop  = 0x08 + T; // 2
 	OPC top  = 0x0A;
 	OPC cast = 0x0B + T; // 4
@@ -125,10 +179,11 @@ class op {
 
 	OPC factorial = 0x0F;
 
-	OPC add = 0x10 + T; // 2
-	OPC sub = 0x12 + T; // 2
-	OPC mul = 0x14 + T; // 2
-	OPC div = 0x16 + T; // 2
+	// adjusted for complex numbers:
+	OPC add = T == dtp::c ? 0xCA : 0x10 + T; // 2
+	OPC sub = T == dtp::c ? 0xCB : 0x12 + T; // 2
+	OPC mul = T == dtp::c ? 0xCC : 0x14 + T; // 2
+	OPC div = T == dtp::c ? 0xCD : 0x16 + T; // 2
 	OPC mod = 0x18 + T; // 2
 	OPC pow = 0x1A + T; // 2
 
@@ -189,14 +244,27 @@ class op {
 
 	OPC scope  = 0x8C + T; // 2
 
-	// ==========================================
+	// === COMPLEX INSTRUCTIONS =================
+
+	OPC complex = 0xC1 - T; // 2, .[f|i] are inverted
+	OPC project = T; // 2, .[R = C3|I = C4]
+	
+	// add.c, sub.c, mul.c, div.c are defined above
+
+	OPC conjugate = 0xCE;
+
+	// push.i = CF is defined above
+
+	// === MATH FUNCTIONS =======================
+
+	OPC math = 0xD0 + T; // 2
 
 };
 
 #undef OPC
 #undef TYP
 
-union val { u64 i; f64 f; void * p; };
+union val { u64 i; f64 f; cpx c; void * p; };
 
 static_assert(sizeof(val) == 8, "Please adjust the (val) union size!");
 

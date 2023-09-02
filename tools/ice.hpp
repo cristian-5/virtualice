@@ -2,20 +2,22 @@
 #ifndef ICE_PURE
 #define ICE_PURE
 
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
+#include <cmath>
 
 #include <string>
 #include <type_traits>
 #include <limits>
 #include <bit>
-#include <cmath>
 
 using byt = char;
 using chr = char;
 using bln = bool;
+using bit = bool;
 using u8  = uint_fast8_t;
 using u16 = uint_fast16_t;
 using u32 = uint_fast32_t;
@@ -74,15 +76,6 @@ static inline void o_stream(void * p) {
 	if (fputs(static_cast<const chr *>(p), stdout) == EOF) {
 		perror("fputs()");
 	}
-}
-
-[[gnu::always_inline]]
-static inline chr * sign(u64 n) {
-	static const chr * a = "-IRNYSGTBPABCDEF";
-	chr * s = (chr *)malloc(17);
-	for (i8 i = 15; i >= 0; i--) {
-		s[15 - i] = a[(n >> (4 * i)) & 0xF];
-	} s[16] = 0x00; return s;
 }
 
 [[gnu::always_inline]]
@@ -258,10 +251,15 @@ inline static f64 s2f(chr * s) {
 	catch (...) { throw invalid_format(); }
 }
 
+inline void string_copy(char * d, const char * s) {
+	while (* s) * d++ = * s++;
+	* d = 0x00;
+}
+
 inline static chr * u2x(u64 u) {
 	str result = format("0x%llX", u);
 	chr * copy = (chr *) malloc(result.length() + 1);
-	strcpy(copy, result.c_str());
+	string_copy(copy, result.c_str());
 	return copy;
 }
 
@@ -269,7 +267,7 @@ inline static chr * f2x(f64 f) {
 	u64 * u = (u64 *) & f;
 	str result = format("0x%016llX", * u);
 	chr * copy = (chr *) malloc(result.length() + 1);
-	strcpy(copy, result.c_str());
+	string_copy(copy, result.c_str());
 	return copy;
 }
 

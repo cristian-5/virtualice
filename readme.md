@@ -28,6 +28,10 @@ It is possible to force the creation of a new scope with the instruction
 `scope.c` and the deletion follows `scope.d`. A scope deletion will
 always invoke the garbage collector.
 
+Complex numbers are supported and stored as a 64bit value composed of
+two 32bit floating point values. The first 32bit value is the real part
+and the second is the imaginary part.
+
 ### Instruction Set
 
 ``` asm
@@ -49,14 +53,14 @@ always invoke the garbage collector.
 	cast.[b|w|d|q]    ; value casting with size
 	convert.to.[i|f]  ; value conversion with type
 
-; arithmetics: (i = int, f = float)
+; arithmetics: (i = int, f = float, c = complex)
 
 	factorial
 
-	add.[i|f]
-	sub.[i|f]
-	mul.[i|f]
-	div.[i|f]
+	add.[i|f|c]
+	sub.[i|f|c]
+	mul.[i|f|c]
+	div.[i|f|c]
 	mod.[i|f]
 	pow.[i|f]
 	
@@ -76,6 +80,59 @@ always invoke the garbage collector.
 
 	shift.[l|r]    [number]
 	rotate.[l|r]   [number]
+
+; complex numbers:
+
+	complex.[f|i]     ; make a complex from 2 [f|i] stack top values
+	project.[r|i]     ; projection of the real or imaginary part
+	conjugate         ; complex conjugate
+
+; math library (always over f values):
+
+	math.i       ; push the imaginary unit (as a complex number)
+	math.e       ; push the euler constant
+	math.ln10    ; push the natural logarithm of 10
+	math.ln2     ; push the natural logarithm of 2
+	math.log10e  ; push the base 10 logarithm of e
+	math.log2e   ; push the base 2 logarithm of e
+	math.pi      ; push the pi constant
+	math.sqrt1_2 ; push the square root of 1/2
+	math.sqrt2   ; push the square root of 2
+	math.egamma  ; push the euler-mascheroni constant
+	math.phi	 ; push the golden ratio
+
+	math.abs
+	math.acos
+	math.acosh
+	math.asin
+	math.asinh
+	math.atan
+	math.atan2
+	math.atanh
+	math.cbrt
+	math.ceil
+	math.cos
+	math.cosh
+	math.exp
+	math.expm1
+	math.floor
+	math.hypot
+	math.log
+	math.log1p
+	math.log10
+	math.log2
+	math.max
+	math.min
+	math.pow
+	math.round
+	math.sign    ; returns 0 if positive, 1 otherwise
+	math.sin
+	math.sinh
+	math.sqrt
+	math.tan
+	math.tanh
+	math.trunc
+
 
 ; functions, threads, exceptions:
 
@@ -186,7 +243,6 @@ always invoke the garbage collector.
 | HEX | Prototype              | Description                                         |
 |:---:|:----------------------:|:----------------------------------------------------|
 |`DE` | `debug();`             | *Prints the stack and the call frame to `stdout`.*  |
-|`51` | `sign(n: u64): [chr];` | *Returns the string signature of `n`.*              |
 |`71` | `time(): u64;`         | *Returns the current unix timestamp.*               |
 |`5E` | `seed(s: u64);`        | *Sets the seed `s` for the next random generation.* |
 |`3A` | `random(): u64;`       | *Generates a pseudo random number using a pcg.*     |

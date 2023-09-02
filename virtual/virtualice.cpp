@@ -4,6 +4,8 @@
 
 #include <chrono>
 #include <thread>
+#include <numbers>
+#include <iostream>
 
 using namespace std;
 
@@ -101,12 +103,16 @@ void vm::run(arr<u8> code, u64 p) {
 			case  op::factorial<>: PUSH({ .i = factorial(stack.pop().i) }); break;
 			case  op::add<typ::i>: POP_BA PUSH({ .i = a.i + b.i }); break;
 			case  op::add<typ::f>: POP_BA PUSH({ .f = a.f + b.f }); break;
+			case  op::add<dtp::c>: POP_BA PUSH({ .c = a.c + b.c }); break;
 			case  op::sub<typ::i>: POP_BA PUSH({ .i = a.i - b.i }); break;
 			case  op::sub<typ::f>: POP_BA PUSH({ .f = a.f - b.f }); break;
+			case  op::sub<dtp::c>: POP_BA PUSH({ .c = a.c - b.c }); break;
 			case  op::mul<typ::i>: POP_BA PUSH({ .i = a.i * b.i }); break;
 			case  op::mul<typ::f>: POP_BA PUSH({ .f = a.f * b.f }); break;
+			case  op::mul<dtp::c>: POP_BA PUSH({ .c = a.c * b.c }); break;
 			case  op::div<typ::i>: POP_BA PUSH({ .i = a.i / b.i }); break;
 			case  op::div<typ::f>: POP_BA PUSH({ .f = a.f / b.f }); break;
+			case  op::div<dtp::c>: POP_BA PUSH({ .c = a.c / b.c }); break;
 			case  op::mod<typ::i>: POP_BA PUSH({ .i = a.i % b.i }); break;
 			case  op::mod<typ::f>: POP_BA PUSH({ .f = F_MOD(a.f, b.f) }); break;
 			case  op::pow<typ::i>: POP_BA PUSH({ .i = (u64)((i64)pow(a.i, b.i)) }); break;
@@ -153,11 +159,14 @@ void vm::run(arr<u8> code, u64 p) {
 				switch (getB(++i)) {
 					case krn::estream: e_stream(stack.pop().p); break;
 					case krn::ostream: o_stream(stack.pop().p); break;
-					case krn::istream: break;
-					
+					case krn::istream: {
+						char * tmp = new char[256];
+						std::cin.getline(tmp, 256);
+						PUSH({ .p = tmp });
+					} break;
 					case krn::fork: {
 						thread * t = new thread(run, code, stack.pop().i);
-						stack.push({ .p = t });
+						PUSH({ .p = t });
 					} break;
 					case krn::join: return;
 					case krn::sleep:
@@ -194,9 +203,7 @@ void vm::run(arr<u8> code, u64 p) {
 					break;
 					case krn::copy: POP_AB memcpy(b.p, a.p, stack.pop().i);
 					break;
-					case krn::load:
-						POP_AB memcpy(b.p, & code.data[a.i], stack.pop().i);
-					break;
+					case krn::load: POP_AB memcpy(b.p, & code.data[a.i], stack.pop().i); break;
 					case krn::zeros:
 						memset(stack.pop().p, 0x00, stack.pop().i);
 					break;
@@ -210,7 +217,6 @@ void vm::run(arr<u8> code, u64 p) {
 							stack.pop().i
 						) & 1ull });
 					break;
-
 					case krn::debug:
 						puts("= STACK ========================================");
 						for (siz j = 0; j < stack.size(); j++) {
@@ -228,7 +234,6 @@ void vm::run(arr<u8> code, u64 p) {
 						puts("================================================");
 						fflush(stdout);
 					break;
-					case krn::sign: stack.push({ .p = sign(stack.pop().i) }); break;
 					case krn::time: stack.push({ .i = (u64)time(nullptr) }); break;
 					case krn::seed: pcg::seed(stack.pop().i); break;
 					case krn::random: stack.push({ .i = pcg::next() }); break;
@@ -319,6 +324,54 @@ void vm::run(arr<u8> code, u64 p) {
 				current_scope = current_scope -> parent;
 				delete tmp;
 			} break;
+			case op::complex<typ::i>: POP_BA PUSH({ .c = { (f32)a.i, (f32)b.i } }); break;
+			case op::complex<typ::f>: POP_BA PUSH({ .c = { (f32)a.f, (f32)b.f } }); break;
+			case op::project<dtp::r>: POP_A PUSH({ .f = (f64)a.c.r }); break;
+			case op::project<dtp::i>: POP_A PUSH({ .f = (f64)a.c.i }); break;
+			case op::conjugate<>: POP_A PUSH({ .c = ~ a.c }); break;
+			// === MATH FUNCTIONS ==============================================
+			case op::math<fun::_i_>:       PUSH({ .c = { 0, 1 } }); break;
+			case op::math<fun::_e_>:       PUSH({ .f = numbers::e_v<f64> }); break;
+			case op::math<fun::_ln10_>:    PUSH({ .f = numbers::ln10_v<f64> }); break;
+			case op::math<fun::_ln2_>:     PUSH({ .f = numbers::ln2_v<f64> }); break;
+			case op::math<fun::_log10e_>:  PUSH({ .f = numbers::log10e_v<f64> }); break;
+			case op::math<fun::_log2e_>:   PUSH({ .f = numbers::log2e_v<f64> }); break;
+			case op::math<fun::_pi_>:      PUSH({ .f = numbers::pi_v<f64> }); break;
+			case op::math<fun::_sqrt1_2_>: PUSH({ .f = sqrt(1 / 2) }); break;
+			case op::math<fun::_sqrt2_>:   PUSH({ .f = numbers::sqrt2_v<f64> }); break;
+			case op::math<fun::_egamma_>:  PUSH({ .f = numbers::egamma_v<f64> }); break;
+			case op::math<fun::_phi_>:     PUSH({ .f = numbers::phi_v<f64> }); break;
+			case op::math<fun::_abs_>:   POP_A PUSH({ .f = abs(a.f) }); break;
+			case op::math<fun::_acos_>:  POP_A PUSH({ .f = acos(a.f) }); break;
+			case op::math<fun::_acosh_>: POP_A PUSH({ .f = acosh(a.f) }); break;
+			case op::math<fun::_asin_>:  POP_A PUSH({ .f = asin(a.f) }); break;
+			case op::math<fun::_asinh_>: POP_A PUSH({ .f = asinh(a.f) }); break;
+			case op::math<fun::_atan_>:  POP_A PUSH({ .f = atan(a.f) }); break;
+			case op::math<fun::_atan2_>: POP_BA PUSH({ .f = atan2(a.f, b.f) }); break;
+			case op::math<fun::_atanh_>: POP_A PUSH({ .f = atanh(a.f) }); break;
+			case op::math<fun::_cbrt_>:  POP_A PUSH({ .f = cbrt(a.f) }); break;
+			case op::math<fun::_ceil_>:  POP_A PUSH({ .f = ceil(a.f) }); break;
+			case op::math<fun::_cos_>:   POP_A PUSH({ .f = cos(a.f) }); break;
+			case op::math<fun::_cosh_>:  POP_A PUSH({ .f = cosh(a.f) }); break;
+			case op::math<fun::_exp_>:   POP_A PUSH({ .f = exp(a.f) }); break;
+			case op::math<fun::_expm1_>: POP_A PUSH({ .f = expm1(a.f) }); break;
+			case op::math<fun::_floor_>: POP_A PUSH({ .f = floor(a.f) }); break;
+			case op::math<fun::_hypot_>: POP_BA PUSH({ .f = hypot(a.f, b.f) }); break;
+			case op::math<fun::_log_>:   POP_A PUSH({ .f = log(a.f) }); break;
+			case op::math<fun::_log1p_>: POP_A PUSH({ .f = log1p(a.f) }); break;
+			case op::math<fun::_log10_>: POP_A PUSH({ .f = log10(a.f) }); break;
+			case op::math<fun::_log2_>:  POP_A PUSH({ .f = log2(a.f) }); break;
+			case op::math<fun::_max_>:   POP_BA PUSH({ .f = max(a.f, b.f) }); break;
+			case op::math<fun::_min_>:   POP_BA PUSH({ .f = min(a.f, b.f) }); break;
+			case op::math<fun::_pow_>:   POP_BA PUSH({ .f = pow(a.f, b.f) }); break;
+			case op::math<fun::_round_>: POP_A PUSH({ .f = round(a.f) }); break;
+			case op::math<fun::_sign_>:  POP_A PUSH({ .i = signbit(a.f) }); break;
+			case op::math<fun::_sin_>:   POP_A PUSH({ .f = sin(a.f) }); break;
+			case op::math<fun::_sinh_>:  POP_A PUSH({ .f = sinh(a.f) }); break;
+			case op::math<fun::_sqrt_>:  POP_A PUSH({ .f = sqrt(a.f) }); break;
+			case op::math<fun::_tan_>:   POP_A PUSH({ .f = tan(a.f) }); break;
+			case op::math<fun::_tanh_>:  POP_A PUSH({ .f = tanh(a.f) }); break;
+			case op::math<fun::_trunc_>: POP_A PUSH({ .f = trunc(a.f) }); break;
 		}
 		++i;
 	}
