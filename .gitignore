@@ -1,6 +1,9 @@
 
 /.vscode/
 
+*.o
+*.obj
+*.ice
 /tests/*.ice
 /tests/*.bin
 
