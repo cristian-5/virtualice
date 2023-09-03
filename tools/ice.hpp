@@ -251,6 +251,7 @@ inline static f64 s2f(chr * s) {
 	catch (...) { throw invalid_format(); }
 }
 
+// TOCHECK: is this correct?
 inline void string_copy(char * d, const char * s) {
 	while (* s) * d++ = * s++;
 	* d = 0x00;

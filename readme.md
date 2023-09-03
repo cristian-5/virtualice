@@ -81,6 +81,21 @@ and the second is the imaginary part.
 	shift.[l|r]    [number]
 	rotate.[l|r]   [number]
 
+; compare:
+
+	compare.[i|f].[e|ne]
+	compare.[s|u|f].[ge|le|g|l]
+
+; jumps:
+
+	jump       [address]
+	jump.[t|f] [address]
+
+; exceptions
+
+	raise  ; raises the exception flag
+	flag   ; moves the exception flag on the stack
+
 ; complex numbers:
 
 	complex.[f|i]     ; make a complex from 2 [f|i] stack top values
@@ -135,12 +150,11 @@ and the second is the imaginary part.
 	math.tanh
 	math.trunc
 
-
-; functions, threads, exceptions:
+; functions, kernel, lambda calls:
 
 	call.k   [function] ; call to kernel
 	call     [function]
-	call.l              ; indirect 'lamda' call
+	call.l              ; indirect 'lambda' call
 	
 	return
 
@@ -163,21 +177,6 @@ and the second is the imaginary part.
 
 	scope.c ; create scope
 	scope.d ; delete scope
-
-; exceptions
-
-	raise  ; raises the exception flag
-	flag   ; moves the exception flag on the stack
-
-; jumps:
-
-	jump       [address]
-	jump.[t|f] [address]
-
-; compare:
-
-	compare.[i|f].[e|ne]
-	compare.[s|u|f].[ge|le|g|l]
 
 ```
 
