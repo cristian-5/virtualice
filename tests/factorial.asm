@@ -1,58 +1,19 @@
 
 #include "ice.asm"
 
-STRPTR = 0
-; allocate enough memory:
-push.b     string_0_length
-call.k     allocate
-global.b.c STRPTR            ; store allocation ptr
+input:
 
-; load the string in memory:
-push.b     string_0_length   ; number of bytes to copy
-global.b.g STRPTR            ; get allocation ptr (destination)
-push.d     string_0          ; code pointer (source)
-call.k     load              ; fun load(s: u32, d: *, n: u64): *;
+	push.a    string_0           ; push string_0 address
+	call.k    odata              ; print string_0
 
-; print the string and cleanup:
-global.b.g STRPTR            ; get allocation ptr
-top                          ; duplicate string pointer
-call.k    ostream
-call.k    deallocate         ; deallocate leftover pointer
-
-; --------------------------------
-
-call.k    istream            ; get user input
-call.k    s2i                ; convert string to integer
-
-flag                         ; get exception flag
-jump.f    main               ; if (flag == 0) goto main
-
-; print error message:
-
-; allocate enough memory:
-push.b     string_1_length
-call.k     allocate
-global.b.s STRPTR            ; store allocation ptr
-
-; load the string in memory:
-push.b     string_1_length   ; number of bytes to copy
-global.b.g STRPTR            ; get allocation ptr (destination)
-push.d     string_1          ; code pointer (source)
-call.k     load              ; fun load(s: u32, d: *, n: u64): *;
-
-; print the string and cleanup:
-global.b.g STRPTR            ; get allocation ptr
-top                          ; duplicate string pointer
-call.k    ostream
-call.k    deallocate         ; deallocate leftover pointer
-
-halt
-
-main:
+	call.k    istream            ; get user input
+	call.k    s2i                ; convert string to integer
 
 	call      factorial
 	call.k    i2s
 	top
+	push.a    string_1           ; push string_1 address
+	call.k    odata              ; print string_1
 	call.k    ostream
 	call.k    deallocate
 	halt
@@ -83,5 +44,5 @@ string_0:
 	string_0_length = $ - string_0
 
 string_1:
-	#d "invalid integer!\n", 0x00
-	string_1_length = $ - string_0
+	#d "the factorial is: ", 0x00
+	string_1_length = $ - string_1

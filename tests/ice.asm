@@ -165,10 +165,13 @@
 	complex.f => 0xC0
 	complex.i => 0xC1
 	
+	project   => 0xC2 ; project to 2 f values
 	project.r => 0xC3 ; project to real part
 	project.i => 0xC4 ; project to imaginary part
 
-	; padding of 6 instructions
+	magnitude => 0xC5
+
+	; padding of 4 instructions
 	
 	add.c => 0xCA
 	sub.c => 0xCB
@@ -229,10 +232,14 @@
 
 estream = 0xE5
 ostream = 0x05
+edata   = 0xED
+odata   = 0x0D
+eflush  = 0xEF
+oflush  = 0x0F
 istream = 0x15
 
 fork    = 0xF0
-join    = 0xEF
+join    = 0x10
 sleep   = 0x57
 wait    = 0xA1
 lock    = 0x88
