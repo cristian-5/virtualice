@@ -31,8 +31,8 @@ class typ {
 
 class dtp {
 	public:
-	TYP r = 0xC3; // real
-	TYP i = 0xC4; // imaginary
+	TYP r = 1; // real
+	TYP i = 2; // imaginary
 	TYP c = 0xC0; // complex
 };
 
@@ -82,10 +82,14 @@ class krn {
 
 	TYP estream = 0xE5;
 	TYP ostream = 0x05;
+	TYP edata   = 0xED;
+	TYP odata   = 0x0D;
+	TYP eflush  = 0xEF;
+	TYP oflush  = 0x0F;
 	TYP istream = 0x15;
 
 	TYP fork      = 0xF0;
-	TYP join      = 0xEF;
+	TYP join      = 0x10;
 	TYP sleep     = 0x57;
 	TYP wait      = 0xA1;
 	TYP lock      = 0x88;
@@ -247,17 +251,16 @@ class op {
 	// === COMPLEX INSTRUCTIONS =================
 
 	OPC complex = 0xC1 - T; // 2, .[f|i] are inverted
-	OPC project = T; // 2, .[R = C3|I = C4]
+	OPC project = 0xC2 + T; // 2, .[R = C3|I = C4]
+	OPC magnitude = 0xC5;
 	
 	// add.c, sub.c, mul.c, div.c are defined above
 
 	OPC conjugate = 0xCE;
 
-	// push.i = CF is defined above
-
 	// === MATH FUNCTIONS =======================
 
-	OPC math = 0xD0 + T; // 2
+	OPC math = 0xCF + T; // 2
 
 };
 

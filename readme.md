@@ -84,7 +84,9 @@ and the second is the imaginary part.
 ; complex numbers:
 
 	complex.[f|i]     ; make a complex from 2 [f|i] stack top values
+	project           ; unpacks a complex number into 2 [f] values
 	project.[r|i]     ; projection of the real or imaginary part
+	magnitude         ; magnitude of the complex number
 	conjugate         ; complex conjugate
 
 ; math library (always over f values):
@@ -187,6 +189,10 @@ and the second is the imaginary part.
 |:---:|:-------------------:|:-------------------------------------------------------------|
 |`E5` | `estream([chr]);`   | *Prints the null terminated string to `stderr`.*             |
 |`05` | `ostream([chr]);`   | *Prints the null terminated string to `stdout`.*             |
+|`ED` | `edata(p: u32);`    | *Prints the string in program data pointer `p` to `stderr`.* |
+|`0D` | `odata(p: u32);`    | *Prints the string in program data pointer `p` to `stdout`.* |
+|`EF` | `eflush();`         | *Flushes `stderr`.*                                          |
+|`0F` | `oflush();`         | *Flushes `stdout`.*                                          |
 |`15` | `istream(): [chr];` | *Waits for the enter key, returns the last line of `stdin`.* |
 
 ### Threading management functions
@@ -194,7 +200,7 @@ and the second is the imaginary part.
 | HEX | Prototype              | Description                                             |
 |:---:|:----------------------:|:--------------------------------------------------------|
 |`F0` | `fork(p: u32): [thr];` | *Spawns and returns a thread at instruction `p`.*       |
-|`EF` | `join();`              | *Ends the current thread, joining the main flow.*       |
+|`10` | `join();`              | *Ends the current thread, joining the main flow.*       |
 |`57` | `sleep(ms: u64);`      | *Sleeps for `ms` milliseconds.*                         |
 |`A1` | `wait(t: [thr]);`      | *Waits for thread `t` to complete.*                     |
 |`88` | `lock();`              | *Locks the current thread to begin a critical section.* |

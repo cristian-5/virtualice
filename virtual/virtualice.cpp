@@ -159,6 +159,10 @@ void vm::run(arr<u8> code, u64 p) {
 				switch (getB(++i)) {
 					case krn::estream: e_stream(stack.pop().p); break;
 					case krn::ostream: o_stream(stack.pop().p); break;
+					case krn::edata:   e_stream(& code.data[stack.pop().i]); break;
+					case krn::odata:   o_stream(& code.data[stack.pop().i]); break;
+					case krn::eflush:  fflush(stderr); break;
+					case krn::oflush:  fflush(stdout); break;
 					case krn::istream: {
 						char * tmp = new char[256];
 						std::cin.getline(tmp, 256);
@@ -326,8 +330,14 @@ void vm::run(arr<u8> code, u64 p) {
 			} break;
 			case op::complex<typ::i>: POP_BA PUSH({ .c = { (f32)a.i, (f32)b.i } }); break;
 			case op::complex<typ::f>: POP_BA PUSH({ .c = { (f32)a.f, (f32)b.f } }); break;
+			case op::project<>:
+				POP_A
+				PUSH({ .f = (f64)a.c.r });
+				PUSH({ .f = (f64)a.c.i });
+			break;
 			case op::project<dtp::r>: POP_A PUSH({ .f = (f64)a.c.r }); break;
 			case op::project<dtp::i>: POP_A PUSH({ .f = (f64)a.c.i }); break;
+			case op::magnitude<>: POP_A PUSH({ .f = absolute(a.c) }); break;
 			case op::conjugate<>: POP_A PUSH({ .c = ~ a.c }); break;
 			// === MATH FUNCTIONS ==============================================
 			case op::math<fun::_i_>:       PUSH({ .c = { 0, 1 } }); break;
