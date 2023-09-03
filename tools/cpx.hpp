@@ -93,12 +93,12 @@ inline constexpr cpx operator ~ (cpx z) {
 }
 
 /// field norm (absolute square)
-inline f32 norm(cpx z) {
+inline f64 norm(cpx z) {
 	return z.r * z.r + z.i * z.i;
 }
 
 /// euclidean norm
-inline f32 absolute(cpx z) {
+inline f64 absolute(cpx z) {
 	return sqrt(norm(z));
 }
 
