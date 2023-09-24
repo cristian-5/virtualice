@@ -254,6 +254,8 @@
 
 	; ==========================================
 
+	address {address: u32} => 0x04 @ address`32 ; equivalent to `const.d`
+
 	call.k {code: u8} => 0xC0 @ code`8
 	; empty instructions 0xC1 ... 0xC6
 	call.l => 0xC7
