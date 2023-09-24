@@ -1,35 +1,42 @@
 
 #include "ice.asm"
 
+virtualice 0
+
 main:
 
-	push.b    10
-	call      fibonacci
-	call.k    debug       ; should print 55
+	const.b    5
+	const.b    5
+	add.n
+
+	call       fibonacci
+	; the kernel debug function prints the stack:
+	call.k     debug       ; should print 55
 	halt
 
-fibonacci: n = 0 ; n is the argument 0
+fibonacci:
 
-	param.b   n
+	; functions have automatic garbage collection
+	; so we need to specify arity:
+	arity.1               ; we have 1 parameter
 
-	local.b.g n           ; get n
-	push.b    2
+	param.r.0             ; get n
+	const.b       2
 
-	compare.u.l           ; if (n < 2) jump base_case
-	jump.t base_case
-						  ; else:
-	local.b.g  n          ; get n
-	decrement             ; n - 1
+	jump.l.n base_case    ; if (n < 2) jump base_case
+	; else:
+	param.r.0             ; get n
+	dec.n                 ; (decrement natural) n - 1
 	call      fibonacci
 
-	local.b.g  n          ; get n
-	decrement
-	decrement             ; n - 2
+	param.r.0             ; get n
+	dec.n
+	dec.n                 ; n - 2
 	call      fibonacci
 
-	add.i                 ; add the 2 calls
+	add.n                 ; add the 2 calls
 	return
 
 	base_case:
-		local.b.g  n
-		return            ; else return n
+		param.r.0         ; get n
+		return            ; return n

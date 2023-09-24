@@ -2,111 +2,127 @@
 # Virtualice VM
 
 Stack based vm for super fast execution.
-Supports threads, exceptions, and kernel extensions.
+It currently supports the following features:
+
+- [x] 64bit signed and unsigned **integers**
+- [x] 64bit **floating** point numbers
+- [x] 64bit **complex** numbers (`f32` real, `f32` imaginary)
+- [x] **control flow** jump and compare instructions
+- [x] **stack based** arithmetic operations on pure types
+- [x] **bitwise** and **boolean** operations
+- [x] *global* and *local* variables
+- [x] **functions** with parameters
+- [x] comprehensive **math** library
+- [ ] **memory** management [page model](https://en.wikipedia.org/wiki/Memory_paging)
+- [ ] **threads**, [fork-join model](https://en.wikipedia.org/wiki/Fork%E2%80%93join_model)
+- [ ] **networks** (probably [Berkeley sockets](https://en.wikipedia.org/wiki/Berkeley_sockets))
 
 ## Architecture
 
-The architecture is capable of executing operations on 64bit integers
-and 64bit floating point numbers. The instruction addresses are 32bit
-long. Jumps are absolute. Function variables, function parameters and
-global variables are restricted to a maximum addressing of 2^16.
+> ⚠️ **Attention**: Breaking Changes since last version!
 
-When a call occurs, a new scope gets generated automatically. It is a
-function's responsibility to move the parameters from the stack into
-the scope using `param.[b|w] $name`. The `return` instruction will
-automatically drop the current scope, invoking the garbage collector.
+The virtual machine is stack based.
 
-Variable shadowing is automatically implemented and if `local.[b|w].g $name`
-does not find the variable in the local scope, it will be fetched from
-the global scope if present. If not found then undefined behaviour.
-For variable shadowing to properly work the varible names should be
-the same for varibles that share the same identifier.
-
-Global variables are thread shared and thread safe.
-
-It is possible to force the creation of a new scope with the instruction
-`scope.c` and the deletion follows `scope.d`. A scope deletion will
-always invoke the garbage collector.
-
-Complex numbers are supported and stored as a 64bit value composed of
-two 32bit floating point values. The first 32bit value is the real part
-and the second is the imaginary part.
+The architecture is capable of handling 64bit integers, floating point and
+complex numbers. Arithmetic operations expect operands to be pushed in
+human order. Addresses are 32 bit absolute. Calls should push parameters
+on reverse on the stack, while it's the function's responsibility to tell
+the environment how many parameters it expects using the `arity` instruction.
 
 ### Instruction Set
 
 ``` asm
 
+virtualice <n>  ; set magic number and version
+
 ; halt, rest:
 
 	halt
-	rest              ; no operation
+	rest        ; no operation
 
-; push, pop, cast:
+; stack operations:
 
-	push.[b|w|d|q]    ; push n bytes
-	push.a [function] ; push function address
-	push.z            ; push 0
-	push.o            ; push 1
-	pop               ; pop a value
-	pop.n [number]    ; pop n values
-	top               ; duplicates stack top
-	cast.[b|w|d|q]    ; value casting with size
-	convert.to.[i|f]  ; value conversion with type
+	const.[b|w|d|q] <value> ; push a constant (byte, word, double, quad)
+	const.[0|1|f|t|h|l] ; push 0, 1, false, true, high, low
 
-; arithmetics: (i = int, f = float, c = complex)
+	swap        ; swaps the top two stack values
 
-	factorial
+	drop        ; drop the top of the stack
+	drop.n  <n> ; drop the top n elements of the stack (max 255)
+	clone       ; clone the top of the stack
+	clone.n <n> ; clone the top of the stack n times   (max 255)
 
-	add.[i|f|c]
-	sub.[i|f|c]
-	mul.[i|f|c]
-	div.[i|f|c]
-	mod.[i|f]
-	pow.[i|f]
-	
-	increment
-	decrement
+; arithmetics: (natural, integer, real, complex)
 
-; bitwise: (l = left, r = right)
+	[add|sub|mul|div].[n|i|r|c] ; nat = int in some cases
+	[mod|pow].[n|i|r]
+	[inc|dec].[n|i|r] ; nat = int here
 
-	and
-	or
-	not
-	xor
-	invert
-	negate
+	magn       ; magnitude of a complex number
+	conj       ; complex conjugate
+	comb       ; combine 2 floating numbers into a complex
+	proj       ; project complex into real and imaginary parts
+	proj.[r|i] ; project complex's real or imaginary part
 
-	swap
+	conv.[n2r|i2r|r2i] ; convert-cast between types
 
-	shift.[l|r]    [number]
-	rotate.[l|r]   [number]
+; bitwise, logical operations (on 64 bits):
 
-; compare:
+	mask.[b|w|d|q]  ; (byte / boolean, word, dword, qword)
+	bit.[g|s|r] <n> ; (get, set, reset) nth bit
+	nibble.[l|h]    ; get (low, high) nibble
+	nibble.s        ; swap nibbles of a byte
+	[buffer|and|or|not|nor|nand|xor|xnor|xand]
+	[invert|complement|reverse]  ; invert, complement, reverse
+	[rotate|shift].[r|l] <n> ; shift / rotate (right, left) by n bits
 
-	compare.[i|f].[e|ne]
-	compare.[s|u|f].[ge|le|g|l]
+; jumps and comparisons:
 
-; jumps:
+	jump [label]                     ; uncoditional jump
+	jump.[1|0|z|nz|t|f|e|ne]        [label] ; if (one, zero, not zero, true, false)
+	jump.[g|ge|l|le].[n|i|r] [label] ; if condition is met
+	compare.[g|ge|l|le].[n|i|r] [label] ; push result of comparison
 
-	jump       [address]
-	jump.[t|f] [address]
+; functions, kernel, lambda calls:
 
-; exceptions
+	address [address]  ; push (32bit) address (of function, lable or data)
 
-	raise  ; raises the exception flag
-	flag   ; moves the exception flag on the stack
+	call    [function] ; call a normal function
+	call.k  [function] ; call to kernel
+	call.l             ; indirect lambda call
 
-; complex numbers:
+	arity   <n>        ; sets the parameters to n
+	arity.[0...7]      ; shorthand for arity up to 8
 
-	complex.[f|i]     ; make a complex from 2 [f|i] stack top values
-	project           ; unpacks a complex number into 2 [f] values
-	project.[r|i]     ; projection of the real or imaginary part
-	magnitude         ; magnitude of the complex number
-	conjugate         ; complex conjugate
+	return             ; returns a value
+	return.v           ; returns void
 
-; math library (always over f values):
+; global and local variables, function parameters:
 
-	math.i       ; push the imaginary unit (as a complex number)
+	global.r       <index> ; read  a global variable (8 bits operand)
+	global.w       <index> ; write a global variable (8 bits operand)
+	global.e.[r|w] <index> ; read / write a global (extended 16 bits operand)
+
+	local.r  <index>    ; read  a local variable
+	local.w  <index>    ; write a local variable
+	local.[r|w].[0...7] ; shorthand for reading / writing first 8 locals
+
+	param.r  <index>    ; read  a function parameter
+	param.w  <index>    ; write a function parameter
+	param.[r|w].[0...7] ; shorthand for reading / writing first 8 parameters
+
+; program data, main memory:
+
+	memory.l [address] ; load  a value from memory (address is 32-bits)
+	memory.s [address] ; store a value  in  memory (address is 32-bits)
+
+```
+
+### Math Library
+
+```
+; math library (always over real values):
+
 	math.e       ; push the euler constant
 	math.ln10    ; push the natural logarithm of 10
 	math.ln2     ; push the natural logarithm of 2
@@ -142,45 +158,28 @@ and the second is the imaginary part.
 	math.min
 	math.pow
 	math.round
-	math.sign    ; returns 0 if positive, 1 otherwise
+	math.sign
 	math.sin
 	math.sinh
 	math.sqrt
 	math.tan
 	math.tanh
 	math.trunc
+```
 
-; functions, kernel, lambda calls:
+## Access Record Information
 
-	call.k   [function] ; call to kernel
-	call     [function]
-	call.l              ; indirect 'lambda' call
-	
-	return
-
-; variables:
-
-	; the variable name is numeric
-	; [b|w] refers to the name length in bytes
-
-	global.[b|w].c [variable name] ; create global var
-	global.[b|w].d [variable name] ; delete global var
-	global.[b|w].g [variable name] ; get global var
-	global.[b|w].s [variable name] ; set global var
-
-	local.[b|w].c [variable name] ; create local var
-	local.[b|w].d [variable name] ; delete local var
-	local.[b|w].g [variable name] ; get local var
-	local.[b|w].s [variable name] ; set local var
-
-	param.[b|w]   [variable name] ; make a parameter
-
-	scope.c ; create scope
-	scope.d ; delete scope
-
+```
++--------+------------------------+--------------------------------+
+| 8 bits |       24 bits          |            32 bits             |
+|--------+------------------------+--------------------------------+
+|  arity |   old frame pointer    |         return address         |
++--------+------------------------+--------------------------------+
 ```
 
 ## Kernel functions
+
+> 🚫 **Critical**: **DO NOT** use any of these as they need revision.
 
 ### I/O functions
 
@@ -252,11 +251,13 @@ and the second is the imaginary part.
 |`5E` | `seed(s: u64);`        | *Sets the seed `s` for the next random generation.* |
 |`3A` | `random(): u64;`       | *Generates a pseudo random number using a pcg.*     |
 
-> Every VM instantiation will always set `seed(time());`.
+## Compilation, usage and testing
+ 
+To compile assembly files install [`customasm`](https://github.com/hlorenzi/customasm).
+Include the file `ice.asm` in your code and compile it with `customasm`.
+Then compile the `virtualice` binary with `ninja` and run it.
 
-## Testing
-
-For testing purposes install [`customasm`](https://github.com/hlorenzi/customasm).
+> ⚠️ ***Warning**: The test files in `/tests/` might be referring to an old version.
 
 ``` zsh
 

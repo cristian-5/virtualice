@@ -168,7 +168,7 @@ inline static chr * i2s(i64 i) {
 
 inline static chr * f2s(f64 f) {
 	chr * s = (chr *) malloc(100);
-	sprintf(s, "%f", f);
+	snprintf(s, 100, "%f", f); // old: sprintf(s, "%f", f);
 	return s;
 }
 
@@ -270,6 +270,44 @@ inline static chr * f2x(f64 f) {
 	chr * copy = (chr *) malloc(result.length() + 1);
 	string_copy(copy, result.c_str());
 	return copy;
+}
+
+/// exponentiation by squaring
+inline static u64 power_u64(u64 base, u64 exponent) {
+	if (exponent == 0) return 1;
+	u64 result = 1;
+	while (exponent > 0) {
+		if (exponent % 2 == 1) result *= base;
+		base *= base;
+		exponent /= 2;
+	}
+	return result;
+}
+
+inline static u64 reverse(u64 n) {
+	u64 r = 0;
+	for (i8 i = 64; i >= 0; i--) {
+		r = (r << 1) | (n & 1);
+		n >>= 1;
+	}
+	return r;
+}
+
+inline static bit get_bit(u64 n, u8 i) {
+	return (n >> (i % 64)) & 1;
+}
+
+inline static bit set_bit(u64 n, u8 i) {
+	return n | (1ull << (i % 64));
+}
+
+inline static bit reset_bit(u64 n, u8 i) {
+	return n & ~(1ull << (i % 64));
+}
+
+inline static i64 sign(f64 r) {
+	if (isnan(r)) return 0;
+	return (r > 0) - (r < 0);
 }
 
 #endif

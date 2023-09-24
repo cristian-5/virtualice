@@ -11,14 +11,14 @@ using namespace std;
 
 #include "virtualice.hpp"
 
-#define F_MOD(N, D) N - (u64)(D * N / D)
-
 #define Q_MASK 0xFFFFFFFFFFFFFFFFull
 #define D_MASK 0x00000000FFFFFFFFull
 #define W_MASK 0x000000000000FFFFull
 #define B_MASK 0x00000000000000FFull
+#define NL_MASK 0x0Full // low  4 bits (nibble)
+#define NH_MASK 0xF0ull // high 4 bits (nibble)
 
-#define V_CAST(V, T) { .i = V.i & T##_MASK }
+#define V_CAST(V, T) { .n = V.n & T##_MASK }
 
 #define POP_A  a = stack.pop();
 #define POP_BA b = stack.pop(); a = stack.pop();
@@ -39,6 +39,10 @@ using namespace std;
 #define UPDATE_I(T) i = & code.data[get##T(++i)]; continue
 #define SKIP(N) i += N
 #define SKIP_NEXT(N) i += N + 1; continue
+
+#define ARITY (stack[fp].n >> 56)
+#define OFP   (stack[fp].n >> 32 & 0x00FFFFFF) // 24 bits only
+#define RA    (stack[fp].n & D_MASK)
 
 #define PU8 const u8 * n = (u8 *)p;
 
@@ -73,91 +77,212 @@ u8  vm::getB(void * p) { return (* ((u8  *)p)) & B_MASK; }
 mtx vm::critical;
 mtx vm::global;
 
-map<u16, val> vm::globals;
-
-void vm::run(arr<u8> code, u64 p) {
-	u8 * i = & code.data[p];
+void vm::run(arr<u8> code) {
+	u8 * i = code.data;
+	// check for magic number:
+	if (code.count < 4 || (getD(i) & 0xFFFFFF00) != 0x69636500) return;
+	SKIP(4); // skip magic number
 	stk<val> stack;
-	stk<u8*> frame;
+	u64 fp = 0;
 	val a, b;
-	bln ex = false;
-	pcg::seed((u64)time(nullptr));
-	scope * current_scope = new scope();
+	// pcg::seed((u64)time(nullptr));
 	while (true) {
 		switch (* i) {
-			case op::halt<>: exit(0);
-			case op::rest<>: break;
-			case op::push<typ::b>: PUSH({ .i = getB(++i) }); break;
-			case op::push<typ::w>: PUSH({ .i = getW(++i) }); SKIP(2); continue;
-			case op::push<typ::d>: PUSH({ .i = getD(++i) }); SKIP(4); continue;
-			case op::push<typ::q>: PUSH({ .i = getQ(++i) }); SKIP(8); continue;
-			case op::push<typ::z>: PUSH({ .i = 0ull }); break;
-			case op::push<typ::o>: PUSH({ .i = 1ull }); break;
-			case        op::pop<>: stack.decrease(); break;
-			case  op::pop<typ::n>: stack.decreaseBy(getB(++i)); break;
-			case        op::top<>: PUSH(stack.top()); break;
-			case op::cast<typ::b>: PUSH(V_CAST(stack.pop(), B)); break;
-			case op::cast<typ::w>: PUSH(V_CAST(stack.pop(), W)); break;
-			case op::cast<typ::d>: PUSH(V_CAST(stack.pop(), D)); break;
-			case op::cast<typ::q>: PUSH(V_CAST(stack.pop(), Q)); break;
-			case  op::factorial<>: PUSH({ .i = factorial(stack.pop().i) }); break;
-			case  op::add<typ::i>: POP_BA PUSH({ .i = a.i + b.i }); break;
-			case  op::add<typ::f>: POP_BA PUSH({ .f = a.f + b.f }); break;
-			case  op::add<dtp::c>: POP_BA PUSH({ .c = a.c + b.c }); break;
-			case  op::sub<typ::i>: POP_BA PUSH({ .i = a.i - b.i }); break;
-			case  op::sub<typ::f>: POP_BA PUSH({ .f = a.f - b.f }); break;
-			case  op::sub<dtp::c>: POP_BA PUSH({ .c = a.c - b.c }); break;
-			case  op::mul<typ::i>: POP_BA PUSH({ .i = a.i * b.i }); break;
-			case  op::mul<typ::f>: POP_BA PUSH({ .f = a.f * b.f }); break;
-			case  op::mul<dtp::c>: POP_BA PUSH({ .c = a.c * b.c }); break;
-			case  op::div<typ::i>: POP_BA PUSH({ .i = a.i / b.i }); break;
-			case  op::div<typ::f>: POP_BA PUSH({ .f = a.f / b.f }); break;
-			case  op::div<dtp::c>: POP_BA PUSH({ .c = a.c / b.c }); break;
-			case  op::mod<typ::i>: POP_BA PUSH({ .i = a.i % b.i }); break;
-			case  op::mod<typ::f>: POP_BA PUSH({ .f = F_MOD(a.f, b.f) }); break;
-			case  op::pow<typ::i>: POP_BA PUSH({ .i = (u64)((i64)pow(a.i, b.i)) }); break;
-			case  op::pow<typ::f>: POP_BA PUSH({ .f = pow(a.f, b.f) }); break;
-			case  op::increment<>: POP_A  PUSH({ .i = a.i + 1 }); break;
-			case  op::decrement<>: POP_A  PUSH({ .i = a.i - 1 }); break;
-			case  op::convert<typ::i>: POP_A PUSH({ .i = (u64)a.f }); break;
-			case  op::convert<typ::f>: POP_A PUSH({ .f = (f64)a.i }); break;
-			case  op::b_and<>: POP_BA PUSH({ .i = (a.i & b.i) }); break;
-			case   op::b_or<>: POP_BA PUSH({ .i = (a.i | b.i) }); break;
-			case  op::l_not<>: POP_A  PUSH({ .i = ! a.i }); break;
-			case  op::b_xor<>: POP_BA PUSH({ .i = (a.i ^ b.i) }); break;
-			case op::invert<>: POP_A  PUSH({ .i = ~ a.i }); break;
-			case   op::complement<>: POP_A PUSH({ .i = - a.i }); break;
-			case  op::shift<typ::r>: POP_A PUSH({ .i = a.i >> getB(++i) }); break;
-			case  op::shift<typ::l>: POP_A PUSH({ .i = a.i << getB(++i) }); break;
-			case op::rotate<typ::r>: POP_A PUSH({ .i = rotateR(a.i, getB(++i)) }); break;
-			case op::rotate<typ::l>: POP_A PUSH({ .i = rotateL(a.i, getB(++i)) }); break;
-			case       op::jump<>: UPDATE_I(D); continue;
-			case op::jump<jmp::t>: POP_A if (a.i)  { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::jump<jmp::f>: POP_A if (!a.i) { UPDATE_I(D); } else SKIP_NEXT(4);
-			case op::raise<>: ex = true; break;
-			case  op::flag<>: PUSH({ .i = ex }); ex = false; break;
-			case  op::swap<>: POP_AB PUSH_AB break;
-			case op::compare_u<cmp::e> : POP_BA PUSH({ .i = (u64(a.i) == u64(b.i)) }); break;
-			case op::compare_u<cmp::ne>: POP_BA PUSH({ .i = (u64(a.i) != u64(b.i)) }); break;
-			case op::compare_u<cmp::l> : POP_BA PUSH({ .i = (u64(a.i)  < u64(b.i)) }); break;
-			case op::compare_u<cmp::le>: POP_BA PUSH({ .i = (u64(a.i) <= u64(b.i)) }); break;
-			case op::compare_u<cmp::g> : POP_BA PUSH({ .i = (u64(a.i)  > u64(b.i)) }); break;
-			case op::compare_u<cmp::ge>: POP_BA PUSH({ .i = (u64(a.i) >= u64(b.i)) }); break;
-			case op::compare_s<cmp::e> : POP_BA PUSH({ .i = (a.i == b.i) }); break;
-			case op::compare_s<cmp::ne>: POP_BA PUSH({ .i = (a.i != b.i) }); break;
-			case op::compare_s<cmp::l> : POP_BA PUSH({ .i = (a.i  < b.i) }); break;
-			case op::compare_s<cmp::le>: POP_BA PUSH({ .i = (a.i <= b.i) }); break;
-			case op::compare_s<cmp::g> : POP_BA PUSH({ .i = (a.i  > b.i) }); break;
-			case op::compare_s<cmp::ge>: POP_BA PUSH({ .i = (a.i >= b.i) }); break;
-			case op::compare_f<cmp::e> : POP_BA PUSH({ .i = (a.f == b.f) }); break;
-			case op::compare_f<cmp::ne>: POP_BA PUSH({ .i = (a.f != b.f) }); break;
-			case op::compare_f<cmp::l> : POP_BA PUSH({ .i = (a.f  < b.f) }); break;
-			case op::compare_f<cmp::le>: POP_BA PUSH({ .i = (a.f <= b.f) }); break;
-			case op::compare_f<cmp::g> : POP_BA PUSH({ .i = (a.f  > b.f) }); break;
-			case op::compare_f<cmp::ge>: POP_BA PUSH({ .i = (a.f >= b.f) }); break;
-			case op::call<cll::k>:
+			case op::_halt: exit(0);
+			case op::_rest_01: break;
+			case op::_const<dta::b>: PUSH({ .n = getB(++i) }); break;
+			case op::_const<dta::w>: PUSH({ .n = getW(++i) }); SKIP(2); continue;
+			case op::_const<dta::d>: PUSH({ .n = getD(++i) }); SKIP(4); continue;
+			case op::_const<dta::q>: PUSH({ .n = getQ(++i) }); SKIP(8); continue;
+			case op::_const_0: PUSH({ .n = 0ull }); break;
+			case op::_const_1: PUSH({ .n = 1ull }); break;
+			case op::_swap: POP_AB PUSH_AB break;
+			case op::_clone_n: for (u64 j = getB(++i) + 1; j > 0; j--) PUSH(stack.top()); break;
+			case  op::_drop_n: stack.decreaseBy(getB(++i)); break;
+			case   op::_clone: PUSH(stack.top()); break;
+			case    op::_drop: stack.decrease(); break;
+			case op::_add<typ::n>: POP_BA PUSH({ .n = a.n + b.n }); break;
+			case op::_add<typ::i>: POP_BA PUSH({ .i = a.i + b.i }); break;
+			case op::_add<typ::r>: POP_BA PUSH({ .r = a.r + b.r }); break;
+			case op::_add<typ::c>: POP_BA PUSH({ .c = a.c + b.c }); break;
+			case op::_sub<typ::n>: POP_BA PUSH({ .n = a.n - b.n }); break;
+			case op::_sub<typ::i>: POP_BA PUSH({ .i = a.i - b.i }); break;
+			case op::_sub<typ::r>: POP_BA PUSH({ .r = a.r - b.r }); break;
+			case op::_sub<typ::c>: POP_BA PUSH({ .c = a.c - b.c }); break;
+			case op::_mul<typ::n>: POP_BA PUSH({ .n = a.n * b.n }); break;
+			case op::_mul<typ::i>: POP_BA PUSH({ .i = a.i * b.i }); break;
+			case op::_mul<typ::r>: POP_BA PUSH({ .r = a.r * b.r }); break;
+			case op::_mul<typ::c>: POP_BA PUSH({ .c = a.c * b.c }); break;
+			case op::_div<typ::n>: POP_BA PUSH({ .n = a.n / b.n }); break;
+			case op::_div<typ::i>: POP_BA PUSH({ .i = a.i / b.i }); break;
+			case op::_div<typ::r>: POP_BA PUSH({ .r = a.r / b.r }); break;
+			case op::_div<typ::c>: POP_BA PUSH({ .c = a.c / b.c }); break;
+			case op::_mod<typ::n>: POP_BA PUSH({ .n = a.n % b.n }); break;
+			case op::_mod<typ::i>: POP_BA PUSH({ .i = a.i % b.i }); break;
+			case op::_mod<typ::r>: POP_BA PUSH({ .r = fmod(a.r, b.r) }); break;
+			// op::_mod<typ::c> is not defined
+			case op::_pow<typ::n>: POP_BA PUSH({ .n = power_u64(a.n, b.n) }); break;
+			case op::_pow<typ::i>: POP_BA PUSH({ .i = (i64)pow(a.i, b.i) }); break;
+			case op::_pow<typ::r>: POP_BA PUSH({ .r = pow(a.r, b.r) }); break;
+			// op::_pow<typ::c> is not defined
+			case op::_inc<typ::n>: POP_A PUSH({ .n = a.n + 1 }); break;
+			case op::_inc<typ::i>: POP_A PUSH({ .i = a.i + 1 }); break;
+			case op::_inc<typ::r>: POP_A PUSH({ .r = a.r + 1.0 }); break;
+			// op::_inc<typ::c> is not defined
+			case op::_dec<typ::n>: POP_A PUSH({ .n = a.n - 1 }); break;
+			case op::_dec<typ::i>: POP_A PUSH({ .i = a.i - 1 }); break;
+			case op::_dec<typ::r>: POP_A PUSH({ .r = a.r - 1.0 }); break;
+			// op::_dec<typ::c> is not defined
+			case op::_magnitude: POP_A PUSH({ .r = absolute(a.c) }); break;
+			case op::_conjugate: POP_A PUSH({ .c = ~ a.c }); break;
+			case op::_combine: POP_BA PUSH({ .c = { (f32)a.r, (f32)b.r } }); break;
+			case op::_project:
+				POP_A
+				PUSH({ .r = (f64)a.c.r });
+				PUSH({ .r = (f64)a.c.i });
+			break;
+			case op::_project_r: POP_A PUSH({ .r = (f64)a.c.r }); break;
+			case op::_project_i: POP_A PUSH({ .r = (f64)a.c.i }); break;
+			case op::_imaginary: PUSH({ .c = { 0.0, 1.0 } }); break;
+			case op::_convert_n2r: POP_A PUSH({ .r = (f64)a.n }); break;
+			case op::_convert_i2r: POP_A PUSH({ .r = (f64)a.i }); break;
+			case op::_convert_r2i: POP_A PUSH({ .i = (i64)a.r }); break;
+			case op::_mask<dta::b>: PUSH(V_CAST(stack.pop(), B)); break;
+			case op::_mask<dta::w>: PUSH(V_CAST(stack.pop(), W)); break;
+			case op::_mask<dta::d>: PUSH(V_CAST(stack.pop(), D)); break;
+			case op::_mask<dta::q>: PUSH(V_CAST(stack.pop(), Q)); break;
+			case   op::_bit: POP_A PUSH({ .n = get_bit(a.n, getB(++i)) }); break;
+			case op::_bit_0: POP_A PUSH({ .n = reset_bit(a.n, getB(++i)) }); break;
+			case op::_bit_1: POP_A PUSH({ .n = set_bit(a.n, getB(++i)) }); break;
+			case op::_nibble_l: POP_A PUSH({ .n =  a.n & NL_MASK }); break;
+			case op::_nibble_h: POP_A PUSH({ .n = (a.n & NH_MASK) >> 4 }); break;
+			case op::_nibble_s: POP_A PUSH({ .n = ((a.n & NL_MASK) << 4) | ((a.n & NL_MASK) >> 4) }); break;
+			case  op::_and: POP_BA PUSH({ .n = (a.n & b.n) }); break;
+			case   op::_or: POP_BA PUSH({ .n = (a.n | b.n) }); break;
+			case  op::_not: POP_A  PUSH({ .n = ! a.n }); break;
+			case  op::_nor: POP_BA PUSH({ .n = !(a.n | b.n) }); break;
+			case op::_nand: POP_BA PUSH({ .n = !(a.n & b.n) }); break;
+			case  op::_xor: POP_BA PUSH({ .n = (a.n ^ b.n) }); break;
+			case op::_xnor: POP_BA PUSH({ .n = !(a.n ^ b.n) }); break;
+			case     op::_invert: POP_A PUSH({ .n = ~ a.n }); break;
+			case op::_complement: POP_A PUSH({ .i = - a.i }); break;
+			case    op::_reverse: POP_A PUSH({ .n = reverse(a.n) }); break;
+			case   op::_rotate_r: POP_A PUSH({ .n = rotateR(a.n, getB(++i)) }); break;
+			case   op::_rotate_l: POP_A PUSH({ .n = rotateL(a.n, getB(++i)) }); break;
+			case    op::_shift_r: POP_A PUSH({ .n = a.n >> getB(++i) }); break;
+			case    op::_shift_l: POP_A PUSH({ .n = a.n << getB(++i) }); break;
+			case    op::_jump: UPDATE_I(D); continue;
+			case  op::_jump_z: POP_A if (a.i == 0) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_o: POP_A if (a.i == 1) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_nz: POP_A if (a.i != 0) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_e: POP_BA if (a.n == b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_ne: POP_BA if (a.n != b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_l<typ::n>: POP_BA if (a.n <  b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_l<typ::i>: POP_BA if (a.i <  b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_l<typ::r>: POP_BA if (a.r <  b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_le<typ::n>: POP_BA if (a.n <= b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_le<typ::i>: POP_BA if (a.i <= b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_le<typ::r>: POP_BA if (a.r <= b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_ge<typ::n>: POP_BA if (a.n >= b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_ge<typ::i>: POP_BA if (a.i >= b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case op::_jump_ge<typ::r>: POP_BA if (a.r >= b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_g<typ::n>: POP_BA if (a.n >  b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_g<typ::i>: POP_BA if (a.i >  b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_g<typ::r>: POP_BA if (a.r >  b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_compare_e: POP_BA PUSH({ .n = (a.n == b.n) }); break;
+			case op::_compare_ne: POP_BA PUSH({ .n = (a.n != b.n) }); break;
+			case  op::_compare_l<typ::n>: POP_BA PUSH({ .n = (a.n <  b.n) }); break;
+			case  op::_compare_l<typ::i>: POP_BA PUSH({ .i = (a.i <  b.i) }); break;
+			case  op::_compare_l<typ::r>: POP_BA PUSH({ .i = (a.r <  b.r) }); break;
+			case op::_compare_le<typ::n>: POP_BA PUSH({ .n = (a.n <= b.n) }); break;
+			case op::_compare_le<typ::i>: POP_BA PUSH({ .i = (a.i <= b.i) }); break;
+			case op::_compare_le<typ::r>: POP_BA PUSH({ .i = (a.r <= b.r) }); break;
+			case op::_compare_ge<typ::n>: POP_BA PUSH({ .n = (a.n >= b.n) }); break;
+			case op::_compare_ge<typ::i>: POP_BA PUSH({ .i = (a.i >= b.i) }); break;
+			case op::_compare_ge<typ::r>: POP_BA PUSH({ .i = (a.r >= b.r) }); break;
+			case  op::_compare_g<typ::n>: POP_BA PUSH({ .n = (a.n >  b.n) }); break;
+			case  op::_compare_g<typ::i>: POP_BA PUSH({ .i = (a.i >  b.i) }); break;
+			case  op::_compare_g<typ::r>: POP_BA PUSH({ .i = (a.r >  b.r) }); break;
+			case op::_global_r: PUSH(stack[getB(++i)]); break;
+			case op::_global_w: stack[getB(++i)] = stack.pop(); break;
+			case op::_global_e_r: PUSH(stack[getW(++i)]); SKIP(2); continue;
+			case op::_global_e_w: stack[getW(++i)] = stack.pop(); SKIP(2); continue;
+			case op::_local_r_: PUSH(stack[fp + 1 + getB(++i)]); break;
+			case op::_local_w_: stack[fp + 1 + getB(++i)] = stack.pop(); break;
+			case op::_local_r<0>: PUSH(stack[fp + 1]); break;
+			case op::_local_r<1>: PUSH(stack[fp + 2]); break;
+			case op::_local_r<2>: PUSH(stack[fp + 3]); break;
+			case op::_local_r<3>: PUSH(stack[fp + 4]); break;
+			case op::_local_r<4>: PUSH(stack[fp + 5]); break;
+			case op::_local_r<5>: PUSH(stack[fp + 6]); break;
+			case op::_local_r<6>: PUSH(stack[fp + 7]); break;
+			case op::_local_r<7>: PUSH(stack[fp + 8]); break;
+			case op::_local_w<0>: stack[fp + 1] = stack.pop(); break;
+			case op::_local_w<1>: stack[fp + 2] = stack.pop(); break;
+			case op::_local_w<2>: stack[fp + 3] = stack.pop(); break;
+			case op::_local_w<3>: stack[fp + 4] = stack.pop(); break;
+			case op::_local_w<4>: stack[fp + 5] = stack.pop(); break;
+			case op::_local_w<5>: stack[fp + 6] = stack.pop(); break;
+			case op::_local_w<6>: stack[fp + 7] = stack.pop(); break;
+			case op::_local_w<7>: stack[fp + 8] = stack.pop(); break;
+			case    op::_arity<>: stack[fp].n |= (u64)getB(++i) << 56; break;
+			case op::_arity<0x1>: stack[fp].n |= 0x1ull << 56; break;
+			case op::_arity<0x2>: stack[fp].n |= 0x2ull << 56; break;
+			case op::_arity<0x3>: stack[fp].n |= 0x3ull << 56; break;
+			case op::_arity<0x4>: stack[fp].n |= 0x4ull << 56; break;
+			case op::_arity<0x5>: stack[fp].n |= 0x5ull << 56; break;
+			case op::_arity<0x6>: stack[fp].n |= 0x6ull << 56; break;
+			case op::_arity<0x7>: stack[fp].n |= 0x7ull << 56; break;
+			case op::_arity<0x8>: stack[fp].n |= 0x8ull << 56; break;
+			case op::_param_r_: PUSH(stack[fp - 1 - getB(++i)]); break;
+			case op::_param_w_: stack[fp - 1 - getB(++i)] = stack.pop(); break;
+			case op::_param_r<0>: PUSH(stack[fp - 1]); break;
+			case op::_param_r<1>: PUSH(stack[fp - 2]); break;
+			case op::_param_r<2>: PUSH(stack[fp - 3]); break;
+			case op::_param_r<3>: PUSH(stack[fp - 4]); break;
+			case op::_param_r<4>: PUSH(stack[fp - 5]); break;
+			case op::_param_r<5>: PUSH(stack[fp - 6]); break;
+			case op::_param_r<6>: PUSH(stack[fp - 7]); break;
+			case op::_param_r<7>: PUSH(stack[fp - 8]); break;
+			case op::_param_w<0>: stack[fp - 1] = stack.pop(); break;
+			case op::_param_w<1>: stack[fp - 2] = stack.pop(); break;
+			case op::_param_w<2>: stack[fp - 3] = stack.pop(); break;
+			case op::_param_w<3>: stack[fp - 4] = stack.pop(); break;
+			case op::_param_w<4>: stack[fp - 5] = stack.pop(); break;
+			case op::_param_w<5>: stack[fp - 6] = stack.pop(); break;
+			case op::_param_w<6>: stack[fp - 7] = stack.pop(); break;
+			case op::_param_w<7>: stack[fp - 8] = stack.pop(); break;
+			case op::_return: // return value:
+				// this is only safe because decreasing the stack does not
+				// shrink it or delete its old values, allowing us to access
+				// the old frame pointer after we set the stack pointer.
+				POP_A                         // save return value
+				i = & code.data[RA];          // restore instruction pointer
+				stack.decreaseTo(fp - ARITY); // restore stack pointer
+				fp = OFP;                     // restore old frame pointer
+				PUSH_A                        // put back the return value
+			continue;
+			case op::_return_v: // return void:
+				i = & code.data[RA];          // restore instruction pointer
+				stack.decreaseTo(fp - ARITY); // restore stack pointer
+				fp = OFP;                     // restore old frame pointer
+			continue;
+			case op::_call: // normal call (address operand):
+				// Access Record: | arity (8b) | OFP (24b) | RA (32b) |
+				PUSH({ .n = (fp << 32) | (u64)(i - code.data + 5) }); // push fp and ra together
+				fp = stack.size() - 1;               // set frame pointer
+				i = & code.data[getD(++i) & D_MASK]; // set instruction pointer
+			continue;
+			case op::_call_l: // lambda call (address on the stack):
+				// Access Record: | arity (8b) | OFP (24b) | RA (32b) |
+				POP_A // get the address of the function
+				PUSH({ .n = (fp << 32) | (u64)(i - code.data + 1) }); // push fp and ra together
+				fp = stack.size() - 1; // set frame pointer
+				i = & code.data[a.n];  // set instruction pointer
+			continue;
+			case op::_call_k:
 				switch (getB(++i)) {
-					case krn::estream: e_stream(stack.pop().p); break;
+					/*case krn::estream: e_stream(stack.pop().p); break;
 					case krn::ostream: o_stream(stack.pop().p); break;
 					case krn::edata:   e_stream(& code.data[stack.pop().i]); break;
 					case krn::odata:   o_stream(& code.data[stack.pop().i]); break;
@@ -192,10 +317,10 @@ void vm::run(arr<u8> code, u64 p) {
 						try { stack.push({ .i = (u64)s2i((chr *)stack.pop().p) }); }
 						catch (invalid_format) { ex = true; }
 					break;
-					case krn::_f2s: stack.push({ .p = f2s(stack.pop().f) }); break;
+					case krn::_f2s: stack.push({ .p = f2s(stack.pop().r) }); break;
 					case krn::_s2f:
-						try { stack.push({ .f = s2f((chr *)stack.pop().p) }); }
-						catch (invalid_format) { ex = true; }
+						try { stack.push({ .r = s2f((chr *)stack.pop().p) }); }
+						catch (invalid_format) { throw; }
 					break;
 
 					case krn::allocate:
@@ -215,179 +340,70 @@ void vm::run(arr<u8> code, u64 p) {
 						POP_AB memset(b.p, (u8)a.i, stack.pop().i);
 					break;
 					case krn::compare:
-						stack.push({ .i = memcmp(
+						stack.push({ .i = (memcmp(
 							stack.pop().p,
 							stack.pop().p,
 							stack.pop().i
-						) & 1ull });
-					break;
+						) & 1ull) });
+					break;*/
 					case krn::debug:
 						puts("= STACK ========================================");
-						for (siz j = 0; j < stack.size(); j++) {
-							printf("%llu\n", stack[j].i);
-						}
-						/*if (!frame.isEmpty()) {
-							puts("- FRAME ----------------------------------------");
-							for (siz j = 0; j < frame.size(); j++) {
-								printf("ret: %llu scp: %llu\n",
-									fp, frame[j].lfp,
-									frame[j].ret - u64(& code.data[0]),
-									frame[j].ari);
-							}
-						}*/
+						for (siz j = 0; j < stack.size(); j++) printf("%llu\n", stack[j].n);
 						puts("================================================");
 						fflush(stdout);
 					break;
-					case krn::time: stack.push({ .i = (u64)time(nullptr) }); break;
-					case krn::seed: pcg::seed(stack.pop().i); break;
-					case krn::random: stack.push({ .i = pcg::next() }); break;
+					//case krn::time: stack.push({ .i = (u64)time(nullptr) }); break;
+					//case krn::seed: pcg::seed(stack.pop().i); break;
+					//case krn::random: stack.push({ .i = pcg::next() }); break;
 				}
 			break;
-			case op::call<cll::c>:
-				// step 0: save return address:
-				frame.push(i + 5);
-				// step 1: new scope:
-				current_scope = new scope(current_scope);
-				// step 2: jump to the function
-				i = & code.data[getD(++i) & D_MASK];
-			continue;
-			case op::call<cll::l>:
-				// step 0: get the address of the function
-				POP_A
-				// step 1: save return address:
-				frame.push(i + 1);
-				// step 2: new scope:
-				current_scope = new scope(current_scope);
-				// step 3: jump to the function
-				i = & code.data[u64(a.p) & D_MASK];
-			continue;
-			case op::ret<>: {
-				scope * tmp = current_scope;
-				current_scope = current_scope -> parent;
-				delete tmp;
-			} i = frame.pop(); continue;
-			case op::negate<>: POP_A PUSH({ .f = - a.f }); break;
-			case op::global<var::bc>:
-				POP_A
-				global.lock();
-				globals.insert({ getB(++i), a });
-				global.unlock();
-			break;
-			case op::global<var::bd>:
-				global.lock();
-				globals.erase(getB(++i));
-				global.unlock();
-			break;
-			case op::global<var::bg>:
-				global.lock();
-				PUSH(globals[getB(++i)]);
-				global.unlock();
-			break;
-			case op::global<var::bs>:
-				POP_A
-				global.lock();
-				globals[getB(++i)] = a;
-				global.unlock();
-			break;
-			case op::global<var::wc>:
-				POP_A global.lock();
-				globals.insert({ getB(++i), a });
-				global.unlock();
-				SKIP(2);
-			continue;
-			case op::global<var::wd>:
-				global.lock();
-				globals.erase(getW(++i));
-				global.unlock();
-				SKIP(2);
-			continue;
-			case op::global<var::wg>:
-				global.lock();
-				PUSH(globals[getW(++i)]);
-				global.unlock();
-				SKIP(2);
-			continue;
-			case op::global<var::ws>:
-				POP_A
-				global.lock();
-				globals[getW(++i)] = a;
-				global.unlock();
-				SKIP(2);
-			continue;
-			case op::local<var::bc>: POP_A current_scope -> add(getB(++i), a); break;
-			case op::local<var::bd>: current_scope -> del(getB(++i)); break;
-			case op::local<var::bg>: PUSH(current_scope -> get(getB(++i))); break;
-			case op::local<var::bs>: POP_A current_scope -> set(getB(++i), a); break;
-			case op::local<var::wc>: POP_A current_scope -> add(getW(++i), a); SKIP(2); continue;
-			case op::local<var::wd>: current_scope -> del(getW(++i)); SKIP(2); continue;
-			case op::local<var::wg>: PUSH(current_scope -> get(getW(++i))); SKIP(2); continue;
-			case op::local<var::ws>: POP_A current_scope -> set(getW(++i), a); SKIP(2); continue;
-			case op::scope<scp::c>: current_scope = new scope(current_scope); break;
-			case op::scope<scp::d>: {
-				scope * tmp = current_scope;
-				current_scope = current_scope -> parent;
-				delete tmp;
-			} break;
-			case op::complex<typ::i>: POP_BA PUSH({ .c = { (f32)a.i, (f32)b.i } }); break;
-			case op::complex<typ::f>: POP_BA PUSH({ .c = { (f32)a.f, (f32)b.f } }); break;
-			case op::project<>:
-				POP_A
-				PUSH({ .f = (f64)a.c.r });
-				PUSH({ .f = (f64)a.c.i });
-			break;
-			case op::project<dtp::r>: POP_A PUSH({ .f = (f64)a.c.r }); break;
-			case op::project<dtp::i>: POP_A PUSH({ .f = (f64)a.c.i }); break;
-			case op::magnitude<>: POP_A PUSH({ .f = absolute(a.c) }); break;
-			case op::conjugate<>: POP_A PUSH({ .c = ~ a.c }); break;
 			// === MATH FUNCTIONS ==============================================
-			case op::math<fun::_i_>:       PUSH({ .c = { 0, 1 } }); break;
-			case op::math<fun::_e_>:       PUSH({ .f = numbers::e_v<f64> }); break;
-			case op::math<fun::_ln10_>:    PUSH({ .f = numbers::ln10_v<f64> }); break;
-			case op::math<fun::_ln2_>:     PUSH({ .f = numbers::ln2_v<f64> }); break;
-			case op::math<fun::_log10e_>:  PUSH({ .f = numbers::log10e_v<f64> }); break;
-			case op::math<fun::_log2e_>:   PUSH({ .f = numbers::log2e_v<f64> }); break;
-			case op::math<fun::_pi_>:      PUSH({ .f = numbers::pi_v<f64> }); break;
-			case op::math<fun::_sqrt1_2_>: PUSH({ .f = sqrt(1 / 2) }); break;
-			case op::math<fun::_sqrt2_>:   PUSH({ .f = numbers::sqrt2_v<f64> }); break;
-			case op::math<fun::_egamma_>:  PUSH({ .f = numbers::egamma_v<f64> }); break;
-			case op::math<fun::_phi_>:     PUSH({ .f = numbers::phi_v<f64> }); break;
-			case op::math<fun::_abs_>:   POP_A PUSH({ .f = abs(a.f) }); break;
-			case op::math<fun::_acos_>:  POP_A PUSH({ .f = acos(a.f) }); break;
-			case op::math<fun::_acosh_>: POP_A PUSH({ .f = acosh(a.f) }); break;
-			case op::math<fun::_asin_>:  POP_A PUSH({ .f = asin(a.f) }); break;
-			case op::math<fun::_asinh_>: POP_A PUSH({ .f = asinh(a.f) }); break;
-			case op::math<fun::_atan_>:  POP_A PUSH({ .f = atan(a.f) }); break;
-			case op::math<fun::_atan2_>: POP_BA PUSH({ .f = atan2(a.f, b.f) }); break;
-			case op::math<fun::_atanh_>: POP_A PUSH({ .f = atanh(a.f) }); break;
-			case op::math<fun::_cbrt_>:  POP_A PUSH({ .f = cbrt(a.f) }); break;
-			case op::math<fun::_ceil_>:  POP_A PUSH({ .f = ceil(a.f) }); break;
-			case op::math<fun::_cos_>:   POP_A PUSH({ .f = cos(a.f) }); break;
-			case op::math<fun::_cosh_>:  POP_A PUSH({ .f = cosh(a.f) }); break;
-			case op::math<fun::_exp_>:   POP_A PUSH({ .f = exp(a.f) }); break;
-			case op::math<fun::_expm1_>: POP_A PUSH({ .f = expm1(a.f) }); break;
-			case op::math<fun::_floor_>: POP_A PUSH({ .f = floor(a.f) }); break;
-			case op::math<fun::_hypot_>: POP_BA PUSH({ .f = hypot(a.f, b.f) }); break;
-			case op::math<fun::_log_>:   POP_A PUSH({ .f = log(a.f) }); break;
-			case op::math<fun::_log1p_>: POP_A PUSH({ .f = log1p(a.f) }); break;
-			case op::math<fun::_log10_>: POP_A PUSH({ .f = log10(a.f) }); break;
-			case op::math<fun::_log2_>:  POP_A PUSH({ .f = log2(a.f) }); break;
-			case op::math<fun::_max_>:   POP_BA PUSH({ .f = max(a.f, b.f) }); break;
-			case op::math<fun::_min_>:   POP_BA PUSH({ .f = min(a.f, b.f) }); break;
-			case op::math<fun::_pow_>:   POP_BA PUSH({ .f = pow(a.f, b.f) }); break;
-			case op::math<fun::_round_>: POP_A PUSH({ .f = round(a.f) }); break;
-			case op::math<fun::_sign_>:  POP_A PUSH({ .i = signbit(a.f) }); break;
-			case op::math<fun::_sin_>:   POP_A PUSH({ .f = sin(a.f) }); break;
-			case op::math<fun::_sinh_>:  POP_A PUSH({ .f = sinh(a.f) }); break;
-			case op::math<fun::_sqrt_>:  POP_A PUSH({ .f = sqrt(a.f) }); break;
-			case op::math<fun::_tan_>:   POP_A PUSH({ .f = tan(a.f) }); break;
-			case op::math<fun::_tanh_>:  POP_A PUSH({ .f = tanh(a.f) }); break;
-			case op::math<fun::_trunc_>: POP_A PUSH({ .f = trunc(a.f) }); break;
+			case op::_math<math::_e>:       PUSH({ .r = numbers::e_v<f64> }); break;
+			case op::_math<math::_ln10>:    PUSH({ .r = numbers::ln10_v<f64> }); break;
+			case op::_math<math::_ln2>:     PUSH({ .r = numbers::ln2_v<f64> }); break;
+			case op::_math<math::_log10e>:  PUSH({ .r = numbers::log10e_v<f64> }); break;
+			case op::_math<math::_log2e>:   PUSH({ .r = numbers::log2e_v<f64> }); break;
+			case op::_math<math::_pi>:      PUSH({ .r = numbers::pi_v<f64> }); break;
+			case op::_math<math::_sqrt1_2>: PUSH({ .r = sqrt(1 / 2) }); break;
+			case op::_math<math::_sqrt2>:   PUSH({ .r = numbers::sqrt2_v<f64> }); break;
+			case op::_math<math::_egamma>:  PUSH({ .r = numbers::egamma_v<f64> }); break;
+			case op::_math<math::_phi>:     PUSH({ .r = numbers::phi_v<f64> }); break;
+			case op::_math<math::_abs>:   POP_A  PUSH({ .r = abs(a.r) }); break;
+			case op::_math<math::_acos>:  POP_A  PUSH({ .r = acos(a.r) }); break;
+			case op::_math<math::_acosh>: POP_A  PUSH({ .r = acosh(a.r) }); break;
+			case op::_math<math::_asin>:  POP_A  PUSH({ .r = asin(a.r) }); break;
+			case op::_math<math::_asinh>: POP_A  PUSH({ .r = asinh(a.r) }); break;
+			case op::_math<math::_atan>:  POP_A  PUSH({ .r = atan(a.r) }); break;
+			case op::_math<math::_atan2>: POP_BA PUSH({ .r = atan2(a.r, b.r) }); break;
+			case op::_math<math::_atanh>: POP_A  PUSH({ .r = atanh(a.r) }); break;
+			case op::_math<math::_cbrt>:  POP_A  PUSH({ .r = cbrt(a.r) }); break;
+			case op::_math<math::_ceil>:  POP_A  PUSH({ .r = ceil(a.r) }); break;
+			case op::_math<math::_cos>:   POP_A  PUSH({ .r = cos(a.r) }); break;
+			case op::_math<math::_cosh>:  POP_A  PUSH({ .r = cosh(a.r) }); break;
+			case op::_math<math::_exp>:   POP_A  PUSH({ .r = exp(a.r) }); break;
+			case op::_math<math::_expm1>: POP_A  PUSH({ .r = expm1(a.r) }); break;
+			case op::_math<math::_floor>: POP_A  PUSH({ .r = floor(a.r) }); break;
+			case op::_math<math::_hypot>: POP_BA PUSH({ .r = hypot(a.r, b.r) }); break;
+			case op::_math<math::_log>:   POP_A  PUSH({ .r = log(a.r) }); break;
+			case op::_math<math::_log1p>: POP_A  PUSH({ .r = log1p(a.r) }); break;
+			case op::_math<math::_log10>: POP_A  PUSH({ .r = log10(a.r) }); break;
+			case op::_math<math::_log2>:  POP_A  PUSH({ .r = log2(a.r) }); break;
+			case op::_math<math::_max>:   POP_BA PUSH({ .r = max(a.r, b.r) }); break;
+			case op::_math<math::_min>:   POP_BA PUSH({ .r = min(a.r, b.r) }); break;
+			case op::_math<math::_pow>:   POP_BA PUSH({ .r = pow(a.r, b.r) }); break;
+			case op::_math<math::_round>: POP_A  PUSH({ .r = round(a.r) }); break;
+			case op::_math<math::_sign>:  POP_A  PUSH({ .i = sign(a.r) }); break;
+			case op::_math<math::_sin>:   POP_A  PUSH({ .r = sin(a.r) }); break;
+			case op::_math<math::_sinh>:  POP_A  PUSH({ .r = sinh(a.r) }); break;
+			case op::_math<math::_sqrt>:  POP_A  PUSH({ .r = sqrt(a.r) }); break;
+			case op::_math<math::_tan>:   POP_A  PUSH({ .r = tan(a.r) }); break;
+			case op::_math<math::_tanh>:  POP_A  PUSH({ .r = tanh(a.r) }); break;
+			case op::_math<math::_trunc>: POP_A  PUSH({ .r = trunc(a.r) }); break;
+			case op::_rest_FF: break;
 		}
 		++i;
 	}
 }
-
-#undef F_MOD
 
 #undef Q_MASK
 #undef D_MASK
@@ -406,6 +422,10 @@ void vm::run(arr<u8> code, u64 p) {
 #undef PUSH_AB
 
 #undef DECREASE
+
+#undef RA
+#undef OFP
+#undef ARITY
 
 #undef CMP_I
 #undef CMP_F

@@ -1,184 +1,267 @@
 
 #ruledef {
 
+	virtualice {version: u8} => 0x696365 @ version`8
+
 	halt => 0x00
-	rest => 0x01
+	; rest => 0x01 ; or 0xFF for completeness
 
-	push.b {value} => 0x02 @ value`8
-	push.w {value} => 0x03 @ value`16
-	push.d {value} => 0x04 @ value`32
-	push.q {value} => 0x05 @ value`64
+	const.b {value} => 0x02 @ value`8
+	const.w {value} => 0x03 @ value`16
+	const.d {value} => 0x04 @ value`32 ; equivalent to `address`
+	const.q {value} => 0x05 @ value`64
 
-	push.a {value} => 0x04 @ value`32
+	; for completeness, do not use as they're not optimized
+	const.n {value} => 0x05 @ value`64
+	const.i {value} => 0x05 @ value`64
+	const.r {value} => 0x05 @ value`64
+	const.c {value} => 0x05 @ value`64
 
-	push.z => 0x06
-	push.o => 0x07
+	const.0 => 0x06
+	const.f => 0x06
+	const.l => 0x06
+	const.1 => 0x07
+	const.t => 0x07
+	const.h => 0x07
 
-	pop => 0x08
-	pop.n {number: u16} => 0x09 @ number`16
+	swap => 0x08
 
-	top => 0x0A
+	; empty instruction 0x09
 
-	cast.b => 0x0B
-	cast.w => 0x0C
-	cast.d => 0x0D
-	cast.q => 0x0E
+	clone.n {number} => 0x0A @ number`8
+	drop.n  {number} => 0x0B @ number`8
+	clone => 0x0C
+	drop  => 0x0D
 
-	; ==========================================
-
-	factorial => 0x0F
-
-	add.i => 0x10
-	add.f => 0x11
-	sub.i => 0x12
-	sub.f => 0x13
-	mul.i => 0x14
-	mul.f => 0x15
-	div.i => 0x16
-	div.f => 0x17
-	mod.i => 0x18
-	mod.f => 0x19
-	pow.i => 0x1A
-	pow.f => 0x1B
-
-	increment => 0x1C
-	decrement => 0x1D
+	; empty instructions 0x0E, 0x0F
 
 	; ==========================================
 
-	convert.to.i => 0x1E
-	convert.to.f => 0x1F
+	add.n => 0x10
+	add.i => 0x11 ; for completeness (same as add.n)
+	add.r => 0x12
+	add.c => 0x13
+
+	sub.n => 0x14
+	sub.i => 0x15 ; for completeness (same as sub.n)
+	sub.r => 0x16
+	sub.c => 0x17
+
+	mul.n => 0x18
+	mul.i => 0x19
+	mul.r => 0x1A
+	mul.c => 0x1B
+
+	div.n => 0x1C
+	div.i => 0x1D
+	div.r => 0x1E
+	div.c => 0x1F
+
+	mod.n => 0x20
+	mod.i => 0x21
+	mod.r => 0x22
+	; mod.c => 0x23 ; not implemented
+
+	pow.n => 0x24
+	pow.i => 0x25
+	pow.r => 0x26
+	; pow.c => 0x27 ; not implemented
+
+	inc.n => 0x28
+	inc.i => 0x29   ; for completeness (same as inc.n)
+	inc.r => 0x30
+	; inc.c => 0x31 ; not implemented
+
+	dec.n => 0x32
+	dec.i => 0x33   ; for completeness (same as dec.n)
+	dec.r => 0x34
+	; dec.c => 0x35 ; not implemented
 
 	; ==========================================
 
-	and => 0x20
-	or  => 0x21
-	not => 0x22
-	xor => 0x23
+	magnitude => 0x36
+	conjugate => 0x37
+	combine   => 0x38
+	project   => 0x39
+	project.r => 0x3A
+	project.i => 0x3B
+	imaginary => 0x3C
 
-	invert => 0x24
-	complement => 0x25
-
-	; 64 = 2^6, 6 bits are enough.
-
-	shift.r {value: u6} => 0x26 @ value`8
-	shift.l {value: u6} => 0x27 @ value`8
-	rotate.r {value: u6} => 0x28 @ value`8
-	rotate.l {value: u6} => 0x29 @ value`8
+	convert.n2r => 0x3D
+	convert.i2r => 0x3E
+	convert.r2i => 0x3F
 
 	; ==========================================
 
-	jump {address: u32} => 0x2A @ address`32
+	mask.b => 0x40
+	mask.w => 0x41
+	mask.d => 0x42
+	mask.q => 0x43
 
-	jump.t {address: u32} => 0x2B @ address`32
-	jump.f {address: u32} => 0x2C @ address`32
-
-	; ==========================================
-
-	raise => 0x2D
-	flag  => 0x2E
-
-	; ==========================================
-
-	swap => 0x2F
-
-	; === PADDING OF 10 INSTRUCTIONS ===========
-
-	compare.u.e  => 0x3A
-	compare.u.ne => 0x3B
-	compare.u.l  => 0x3C
-	compare.u.le => 0x3D
-	compare.u.g  => 0x3E
-	compare.u.ge => 0x3F
-
-	; === PADDING OF 10 INSTRUCTIONS ===========
-
-	compare.s.e  => 0x4A
-	compare.s.ne => 0x4B 
-	compare.s.l  => 0x4C
-	compare.s.le => 0x4D
-	compare.s.g  => 0x4E
-	compare.s.ge => 0x4F
-
-	; === PADDING OF 10 INSTRUCTIONS ===========
-
-	compare.f.e  => 0x5A
-	compare.f.ne => 0x5B
-	compare.f.l  => 0x5C
-	compare.f.le => 0x5D
-	compare.f.g  => 0x5E
-	compare.f.ge => 0x5F
-
-	; ==========================================
-
-	compare.i.e  => 0x3A    ; for completeness
-	compare.i.ne => 0x3B    ; for completeness
-	compare.f.e  => 0x5A    ; for completeness
-	compare.f.ne => 0x5B    ; for completeness
-
-	; === PADDING OF 10 INSTRUCTIONS ===========
-
-	call.k {code: u8} => 0x6A @ code`8
-	call {address: u32} => 0x6B @ address`32
-	call.l => 0x6C
-	return => 0x6D
-
-	; === PADDING OF 01 INSTRUCTIONS ===========
-
-	negate.i => 0x25   ; for completeness
-	negate.f => 0x6F
-
-	; ==========================================
-
-	global.b.c {name: u8} => 0x70 @ name`8
-	global.b.d {name: u8} => 0x71 @ name`8
-	global.b.g {name: u8} => 0x72 @ name`8
-	global.b.s {name: u8} => 0x73 @ name`8
-
-	global.w.c {name: u16} => 0x74 @ name`16
-	global.w.d {name: u16} => 0x75 @ name`16
-	global.w.g {name: u16} => 0x76 @ name`16
-	global.w.s {name: u16} => 0x77 @ name`16
-
-	local.b.c {name: u8} => 0x78 @ name`8
-	local.b.d {name: u8} => 0x79 @ name`8
-	local.b.g {name: u8} => 0x7A @ name`8
-	local.b.s {name: u8} => 0x7B @ name`8
-
-	local.w.c {name: u16} => 0x7C @ name`16
-	local.w.d {name: u16} => 0x7D @ name`16
-	local.w.g {name: u16} => 0x7E @ name`16
-	local.w.s {name: u16} => 0x7F @ name`16
-
-	param.b {name: u8} => 0x78 @ name`8   ; for completeness
-	param.w {name: u16} => 0x7C @ name`16 ; for completeness
-
-	; padding of 9 instructions
-
-	scope.c => 0x8C
-	scope.d => 0x8D
-
-	; padding of ALOT instructions
-
-	; === COMPLEX INSTRUCTIONS =================
-
-	complex.f => 0xC0
-	complex.i => 0xC1
+	bit   => 0x44
+	bit.g => 0x44 ; for completeness
+	bit.r => 0x45
+	bit.0 => 0x45 ; for completeness
+	bit.s => 0x46
+	bit.1 => 0x46 ; for completeness
 	
-	project   => 0xC2 ; project to 2 f values
-	project.r => 0xC3 ; project to real part
-	project.i => 0xC4 ; project to imaginary part
+	nibble.l => 0x47
+	nibble.h => 0x48
+	nibble.s => 0x49
 
-	magnitude => 0xC5
+	buffer => 0x01 ; for completeness
+	and    => 0x4A
+	or     => 0x4B
+	not    => 0x4C
+	nor    => 0x4D
+	nand   => 0x4E
+	xor    => 0x4F
+	xnor   => 0x50
+	xand   => 0x50
 
-	; padding of 4 instructions
-	
-	add.c => 0xCA
-	sub.c => 0xCB
-	mul.c => 0xCC
-	div.c => 0xCD
+	invert     => 0x51
+	complement => 0x52
+	reverse    => 0x53
 
-	conjugate => 0xCE
+	; 64 = 2^6 so 5 bits are enough for rotate
+
+	rotate.r {value: u5} => 0x54 @ value`8
+	rotate.l {value: u5} => 0x55 @ value`8
+	shift.r  {value: u6} => 0x56 @ value`8
+	shift.l  {value: u6} => 0x57 @ value`8
+
+	; empty instructions 0x58 ... 0x5F
+
+	; ==========================================
+
+	jump {address: u32} => 0x5A @ address`32
+
+	jump.0 {address: u32} => 0x5B @ address`32
+	jump.z {address: u32} => 0x5B @ address`32 ; for completeness
+	jump.f {address: u32} => 0x5B @ address`32 ; for completeness
+	jump.1 {address: u32} => 0x5C @ address`32
+	jump.o {address: u32} => 0x5C @ address`32 ; for completeness
+	jump.t {address: u32} => 0x5C @ address`32 ; for completeness
+	jump.nz {address: u32} => 0x5D @ address`32
+
+	jump.e  {address: u32} => 0x5E @ address`32
+	jump.ne {address: u32} => 0x5F @ address`32
+
+	jump.l.n  {address: u32} => 0x60 @ address`32
+	jump.l.i  {address: u32} => 0x61 @ address`32
+	jump.l.r  {address: u32} => 0x62 @ address`32
+	; jump.l.c => 0x63 not implemented
+	jump.le.n {address: u32} => 0x64 @ address`32
+	jump.le.i {address: u32} => 0x65 @ address`32
+	jump.le.r {address: u32} => 0x66 @ address`32
+	; jump.le.c => 0x67 not implemented
+	jump.n.ge {address: u32} => 0x68 @ address`32
+	jump.i.ge {address: u32} => 0x69 @ address`32
+	jump.r.ge {address: u32} => 0x6A @ address`32
+	; jump.c.ge => 0x6B not implemented
+	jump.n.g  {address: u32} => 0x6C @ address`32
+	jump.i.g  {address: u32} => 0x6D @ address`32
+	jump.r.g  {address: u32} => 0x6E @ address`32
+	; jump.c.g  => 0x6F not implemented
+
+	compare.e  {address: u32} => 0x70 @ address`32
+	compare.ne {address: u32} => 0x71 @ address`32
+
+	compare.l.n  {address: u32} => 0x72 @ address`32
+	compare.l.i  {address: u32} => 0x73 @ address`32
+	compare.l.r  {address: u32} => 0x74 @ address`32
+	; compare.l.c => 0x75 not implemented
+	compare.le.n {address: u32} => 0x76 @ address`32
+	compare.le.i {address: u32} => 0x77 @ address`32
+	compare.le.r {address: u32} => 0x78 @ address`32
+	; compare.le.c => 0x79 not implemented
+	compare.n.ge {address: u32} => 0x80 @ address`32
+	compare.i.ge {address: u32} => 0x81 @ address`32
+	compare.r.ge {address: u32} => 0x82 @ address`32
+	; compare.c.ge => 0x83 not implemented
+	compare.n.g  {address: u32} => 0x84 @ address`32
+	compare.i.g  {address: u32} => 0x85 @ address`32
+	compare.r.g  {address: u32} => 0x86 @ address`32
+	; compare.c.g  => 0x87 not implemented
+
+	; empty instructions 0x88, 0x89
+
+	; ==========================================
+
+	global.r {index: u8} => 0x8A @ index`8
+	global.w {index: u8} => 0x8B @ index`8
+	global.e.r {index: u16} => 0x8C @ index`16
+	global.e.w {index: u16} => 0x8D @ index`16
+
+	local.r {index: u8} => 0x8E @ index`8
+	local.w {index: u8} => 0x8F @ index`8
+
+	local.r.0 => 0x90
+	local.r.1 => 0x91
+	local.r.2 => 0x92
+	local.r.3 => 0x93
+	local.r.4 => 0x94
+	local.r.5 => 0x95
+	local.r.6 => 0x96
+	local.r.7 => 0x97
+
+	local.w.0 => 0x98
+	local.w.1 => 0x99
+	local.w.2 => 0x9A
+	local.w.3 => 0x9B
+	local.w.4 => 0x9C
+	local.w.5 => 0x9D
+	local.w.6 => 0x9E
+	local.w.7 => 0x9F
+
+	; ==========================================
+
+	arity {code: u8} => 0xA0 @ code`8
+	arity.0 => 0xFF ; just in case, for completeness
+	arity.1 => 0xA1
+	arity.2 => 0xA2
+	arity.3 => 0xA3
+	arity.4 => 0xA4
+	arity.5 => 0xA5
+	arity.6 => 0xA6
+	arity.7 => 0xA7
+	arity.8 => 0xA8
+
+	; empty instructions 0xA9 ... 0xAD
+
+	; ==========================================
+
+	param.r {index: u8} => 0xAE @ index`8
+	param.w {index: u8} => 0xAF @ index`8
+
+	param.r.0 => 0xB0
+	param.r.1 => 0xB1
+	param.r.2 => 0xB2
+	param.r.3 => 0xB3
+	param.r.4 => 0xB4
+	param.r.5 => 0xB5
+	param.r.6 => 0xB6
+	param.r.7 => 0xB7
+
+	param.w.0 => 0xB8
+	param.w.1 => 0xB9
+	param.w.2 => 0xBA
+	param.w.3 => 0xBB
+	param.w.4 => 0xBC
+	param.w.5 => 0xBD
+	param.w.6 => 0xBE
+	param.w.7 => 0xBF
+
+	; ==========================================
+
+	call.k {code: u8} => 0xC0 @ code`8
+	; empty instructions 0xC1 ... 0xC6
+	call.l => 0xC7
+	; empty instructions 0xC8 ... 0xC9
+	call {address: u32} => 0xCA @ address`32
+
+	return   => 0xCB ; return (Call Back) a value
+	return.v => 0xCC ; return void
 
 	; === MATH FUNCTIONS =======================
 
@@ -227,6 +310,8 @@
 	math.trunc => 0xF8
 
 	; ==========================================
+
+	rest => 0xFF ; or 0x01 for completeness
 
 }
 

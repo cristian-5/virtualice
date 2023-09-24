@@ -12,69 +12,24 @@
 #include "../tools/cpx.hpp"
 
 #define TYP static constexpr u8
-#define OPC template <u8 T = 0> TYP
+#define COP static constexpr u8     // constant operand opcode
+#define VOP template <u8 T = 0> TYP // variable operand opcode
 
-class typ {
+class dta {
 	public:
 	TYP b = 0;
 	TYP w = 1;
 	TYP d = 2;
 	TYP q = 3;
-	TYP z = 4;
-	TYP o = 5;
-	TYP r = 0;
-	TYP l = 1;
-	TYP n = 1;
-	TYP i = 0;
-	TYP f = 1;
 };
 
-class dtp {
+class typ {
 	public:
-	TYP r = 1; // real
-	TYP i = 2; // imaginary
-	TYP c = 0xC0; // complex
-};
-
-class jmp {
-	public:
-	TYP t = 1;
-	TYP f = 2;
-};
-
-class cmp {
-	public:
-	TYP e  = 0x0;
-	TYP ne = 0x1;
-	TYP l  = 0x2;
-	TYP le = 0x3;
-	TYP g  = 0x4;
-	TYP ge = 0x5;
-};
-
-class cll {
-	public:
-	TYP k = 0;
-	TYP c = 1;
-	TYP l = 2;
-};
-
-class var {
-	public:
-	TYP bc = 0;
-	TYP bd = 1;
-	TYP bg = 2;
-	TYP bs = 3;
-	TYP wc = 4;
-	TYP wd = 5;
-	TYP wg = 6;
-	TYP ws = 7;
-};
-
-class scp {
-	public:
-	TYP c = 0;
-	TYP d = 1;
+	TYP b = 0; // byt / bln
+	TYP n = 0; // nat
+	TYP i = 1; // int
+	TYP r = 2; // rea
+	TYP c = 3; // cpx
 };
 
 class krn {
@@ -120,168 +75,208 @@ class krn {
 
 };
 
-enum fun: u8 {
-	_i_ = 0,
-	_e_,
-	_ln10_,
-	_ln2_,
-	_log10e_,
-	_log2e_,
-	_pi_,
-	_sqrt1_2_,
-	_sqrt2_,
-	_egamma_,
-	_phi_,
+enum math: u8 {
 
-	_abs_,
-	_acos_,
-	_acosh_,
-	_asin_,
-	_asinh_,
-	_atan_,
-	_atan2_,
-	_atanh_,
-	_cbrt_,
-	_ceil_,
-	_cos_,
-	_cosh_,
-	_exp_,
-	_expm1_,
-	_floor_,
-	_hypot_,
-	_log_,
-	_log1p_,
-	_log10_,
-	_log2_,
-	_max_,
-	_min_,
-	_pow_,
-	_round_,
-	_sign_,
-	_sin_,
-	_sinh_,
-	_sqrt_,
-	_tan_,
-	_tanh_,
-	_trunc_,
+	_i = 0,
+	_e,
+	_ln10,
+	_ln2,
+	_log10e,
+	_log2e,
+	_pi,
+	_sqrt1_2,
+	_sqrt2,
+	_egamma,
+	_phi,
+
+	_abs,
+	_acos,
+	_acosh,
+	_asin,
+	_asinh,
+	_atan,
+	_atan2,
+	_atanh,
+	_cbrt,
+	_ceil,
+	_cos,
+	_cosh,
+	_exp,
+	_expm1,
+	_floor,
+	_hypot,
+	_log,
+	_log1p,
+	_log10,
+	_log2,
+	_max,
+	_min,
+	_pow,
+	_round,
+	_sign,
+	_sin,
+	_sinh,
+	_sqrt,
+	_tan,
+	_tanh,
+	_trunc
+
 };
 
 class op {
 
 	public:
 
-	OPC halt = 0x00;
-	OPC rest = 0x01;
+	COP _halt = 0x00;
+	COP _rest_01 = 0x01;
 
-	// adjusted for complex numbers:
-	OPC push = T == dtp::c ? 0xCF : 0x02 + T; // 6
-	OPC pop  = 0x08 + T; // 2
-	OPC top  = 0x0A;
-	OPC cast = 0x0B + T; // 4
+	VOP _const = 0x02 + T;
+	COP _const_0 = 0x06;
+	COP _const_1 = 0x07;
 
-	// ==========================================
+	COP _swap = 0x08;
 
-	OPC factorial = 0x0F;
-
-	// adjusted for complex numbers:
-	OPC add = T == dtp::c ? 0xCA : 0x10 + T; // 2
-	OPC sub = T == dtp::c ? 0xCB : 0x12 + T; // 2
-	OPC mul = T == dtp::c ? 0xCC : 0x14 + T; // 2
-	OPC div = T == dtp::c ? 0xCD : 0x16 + T; // 2
-	OPC mod = 0x18 + T; // 2
-	OPC pow = 0x1A + T; // 2
-
-	OPC increment = 0x1C;
-	OPC decrement = 0x1D;
+	COP _clone_n = 0x0A;
+	COP _drop_n  = 0x0B;
+	COP _clone   = 0x0C;
+	COP _drop    = 0x0D;
 
 	// ==========================================
 
-	OPC convert = 0x1E + T; // 2
+	VOP _add = 0x10 + T;
+	VOP _sub = 0x14 + T;
+	VOP _mul = 0x18 + T;
+	VOP _div = 0x1C + T;
+
+	VOP _mod = 0x20 + T;
+	VOP _pow = 0x24 + T;
+
+	VOP _inc = 0x28 + T;
+	VOP _dec = 0x32 + T;
 
 	// ==========================================
 
-	OPC b_and = 0x20;
-	OPC b_or  = 0x21;
-	OPC l_not = 0x22;
-	OPC b_xor = 0x23;
+	COP _magnitude = 0x36;
+	COP _conjugate = 0x37;
+	COP _combine   = 0x38;
+	COP _project   = 0x39;
+	COP _project_r = 0x3A;
+	COP _project_i = 0x3B;
+	COP _imaginary = 0x3C;
 
-	OPC invert     = 0x24;
-	OPC complement = 0x25;
-
-	OPC shift  = 0x26 + T; // 2
-	OPC rotate = 0x28 + T; // 2
-
-	// ==========================================
-
-	OPC jump    = 0x2A + T; // 3
+	COP _convert_n2r = 0x3D;
+	COP _convert_i2r = 0x3E;
+	COP _convert_r2i = 0x3F;
 
 	// ==========================================
 
-	OPC raise = 0x2D;
-	OPC flag  = 0x2E;
+	VOP _mask = 0x40 + T;
+
+	COP _bit   = 0x44;
+	COP _bit_0 = 0x45;
+	COP _bit_1 = 0x46;
+
+	COP _nibble_l = 47;
+	COP _nibble_h = 48;
+	COP _nibble_s = 49;
+
+	// buffer = rest = nop
+	COP _and  = 0x4A;
+	COP _or   = 0x4B;
+	COP _not  = 0x4C;
+	COP _nor  = 0x4D;
+	COP _nand = 0x4E;
+	COP _xor  = 0x4F;
+	COP _xnor = 0x50; // xand = xnor
+
+	COP _invert     = 0x51;
+	COP _reverse    = 0x52;
+	COP _complement = 0x53;
+
+	COP _shift_r  = 0x54;
+	COP _shift_l  = 0x55;
+	COP _rotate_r = 0x56;
+	COP _rotate_l = 0x57;
 
 	// ==========================================
 
-	OPC swap = 0x2F;
+	COP _jump    = 0x5A;
+	COP _jump_z  = 0x5B;
+	COP _jump_o  = 0x5C;
+	COP _jump_nz = 0x5D;
 
-	// === PADDING OF 10 INSTRUCTIONS ===========
+	COP _jump_e  = 0x5E;
+	COP _jump_ne = 0x5F;
 
-	OPC compare_u = 0x3A + T; // 6, padding of 10
-	OPC compare_s = 0x4A + T; // 6, padding of 10
-	OPC compare_f = 0x5A + T; // 6, padding of 10
+	VOP _jump_l  = 0x60 + T;
+	VOP _jump_le = 0x64 + T;
+	VOP _jump_ge = 0x68 + T;
+	VOP _jump_g  = 0x6C + T;
 
-	// === PADDING OF 10 INSTRUCTIONS ===========
+	COP _compare_e  = 0x70;
+	COP _compare_ne = 0x71;
 
-	OPC call  = 0x6A + T; // 3
-	OPC ret   = 0x6D;
-
-	// === PADDING OF 01 INSTRUCTIONS ===========
-
-	OPC negate = 0x6F;
+	VOP _compare_l  = 0x72 + T;
+	VOP _compare_le = 0x76 + T;
+	VOP _compare_ge = 0x80 + T;
+	VOP _compare_g  = 0x84 + T;
 
 	// ==========================================
 
-	OPC global = 0x70 + T; // 8
-	OPC local  = 0x78 + T; // 8
+	COP _global_r = 0x8A;
+	COP _global_w = 0x8B;
+	COP _global_e_r = 0x8C;
+	COP _global_e_w = 0x8D;
 
-	// padding of 9 instructions
+	COP _local_r_ = 0x8E; // _ to distinguish from _local_r
+	COP _local_w_ = 0x8F; // _ to distinguish from _local_w
 
-	OPC scope  = 0x8C + T; // 2
+	VOP _local_r = 0x90 + T;
+	VOP _local_w = 0x98 + T;
 
-	// === COMPLEX INSTRUCTIONS =================
+	// ==========================================
 
-	OPC complex = 0xC1 - T; // 2, .[f|i] are inverted
-	OPC project = 0xC2 + T; // 2, .[R = C3|I = C4]
-	OPC magnitude = 0xC5;
-	
-	// add.c, sub.c, mul.c, div.c are defined above
+	VOP _arity = 0xA0 + T;
 
-	OPC conjugate = 0xCE;
+	// ==========================================
 
-	// === MATH FUNCTIONS =======================
+	COP _param_r_ = 0xAE; // _ to distinguish from _param_r
+	COP _param_w_ = 0xAF; // _ to distinguish from _param_w
 
-	OPC math = 0xCF + T; // 2
+	VOP _param_r = 0xB0 + T;
+	VOP _param_w = 0xB8 + T;
+
+	// ==========================================
+
+	COP _call_k = 0xC0;
+	COP _call_l = 0xC7;
+	COP _call   = 0xCA;
+
+	COP _return   = 0xCB;
+	COP _return_v = 0xCC;
+
+	// ==========================================
+
+	VOP _math = 0xCF + T;
+
+	// ==========================================
+
+	COP _rest_FF = 0xFF;
 
 };
 
-#undef OPC
+#undef VOP
 #undef TYP
 
-union val { u64 i; f64 f; cpx c; void * p; };
+union val { u64 n; i64 i; f64 r; cpx c; void * p; };
 
 static_assert(sizeof(val) == 8, "Please adjust the (val) union size!");
-
-struct cal {
-	u64 lfp = 0; // last frame pointer
-	u64 ret = 0; // return address
-	u8  ari = 0; // function arity
-};
 
 class vm {
 
 	private:
 
-	// ========= MICRO OPCIMISATIONS =========
+	// ========= MICRO VOPIMISATIONS =========
 	// Equivalent to: "mov reg, dword ptr [p]"
 	// where 'reg' is the right register size,
 	// the compiler will always remove N_MASK.
@@ -300,48 +295,6 @@ class vm {
 
 	static mtx critical, global;
 
-	static map<u16, val> globals;
-
-	class scope {
-		public:
-		scope * parent = nullptr;
-		map<u16, val> locals;
-		scope() = default;
-		scope(scope * p) { parent = p; };
-		inline void add(u16 i, val v) {
-			locals.insert({ i, v });
-		}
-		inline void del(u16 i) {
-			auto search = locals.find(i);
-			if (search != locals.end()) locals.erase(search);
-			else if (parent) parent -> del(i);
-			else {
-				global.lock();
-				globals.erase(i);
-				global.unlock();
-			}
-		}
-		inline val get(u16 i) {
-			auto search = locals.find(i);
-			if (search != locals.end()) return search -> second;
-			if (parent) return parent -> get(i);
-			global.lock();
-			val v = globals[i];
-			global.unlock();
-			return v;
-		}
-		inline void set(u16 i, val v) {
-			auto search = locals.find(i);
-			if (search != locals.end()) locals[i] = v;
-			else if (parent) parent -> set(i, v);
-			else {
-				global.lock();
-				globals[i] = v;
-				global.unlock();
-			}
-		}
-	};
-
 	public:
 
 	/*!
@@ -353,7 +306,7 @@ class vm {
 	 *    + ------------------------------------- +
 	!*/
 	
-	static void run(arr<u8> code, u64 p = 0);
+	static void run(arr<u8> code);
 
 };
 
