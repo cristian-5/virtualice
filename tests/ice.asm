@@ -267,7 +267,6 @@
 
 	; === MATH FUNCTIONS =======================
 
-	math.i       => 0xCF
 	math.e       => 0xD0
 	math.ln10    => 0xD1
 	math.ln2     => 0xD2
