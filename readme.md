@@ -117,23 +117,7 @@ virtualice <n>  ; set magic number and version
 	memory.s [address] ; store a value  in  memory (address is 32-bits)
 
 ```
-
-### Math Library [OLD]
-
 ```
-; math library (always over real values):
-
-	math.e       ; push the euler constant
-	math.ln10    ; push the natural logarithm of 10
-	math.ln2     ; push the natural logarithm of 2
-	math.log10e  ; push the base 10 logarithm of e
-	math.log2e   ; push the base 2 logarithm of e
-	math.pi      ; push the pi constant
-	math.sqrt1_2 ; push the square root of 1/2
-	math.sqrt2   ; push the square root of 2
-	math.egamma  ; push the euler-mascheroni constant
-	math.phi	 ; push the golden ratio
-
 	math.abs
 	math.acos
 	math.acosh
@@ -176,6 +160,13 @@ virtualice <n>  ; set magic number and version
 |  ln2   |    None    |  Natural logarithm of 2; approximately 0.693.  |
 | log10e |    None    |  Base-10 logarithm of E; approximately 0.434.  |
 | log2e  |    None    |  Base-2 logarithm of E; approximately 1.443.   |
+|   pi   |    None    |  Ratio of a circle's circumference to its diameter; approximately 3.14159. |
+| sqrt1_2|    None    |  Square root of ½; approximately 0.707. |
+| sqrt2  |    None    |  Square root of 2; approximately 1.414. |
+| egamma |    None    |  ???, not documented |
+| phi    |    None    |  ???, not documented |
+| abs    |  x: real   |  Returns the absolute value of `x` |
+
 
 
 ## Access Record Information
