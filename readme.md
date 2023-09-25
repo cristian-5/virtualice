@@ -117,9 +117,6 @@ virtualice <n>  ; set magic number and version
 	memory.s [address] ; store a value  in  memory (address is 32-bits)
 
 ```
-	math.tanh
-	math.trunc
-```
 
 ## Math Library [NEW]
 |  Code  |  Operands  |  Description  |
