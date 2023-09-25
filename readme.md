@@ -118,51 +118,17 @@ virtualice <n>  ; set magic number and version
 
 ```
 
-## Math Library [NEW]
-|  Code  |  Operands  |  Description  |
-|  ----: | :--------: | :-----------  |
-|   e    |    None    |  Euler's number and the base of natural logarithms; approximately 2.718. |
-| euler  |    None    |  Euler's number and the base of natural logarithms; approximately 2.718. |
-|  ln10  |    None    |  Natural logarithm of 10; approximately 2.303. |
-|  ln2   |    None    |  Natural logarithm of 2; approximately 0.693.  |
-| log10e |    None    |  Base-10 logarithm of E; approximately 0.434.  |
-| log2e  |    None    |  Base-2 logarithm of E; approximately 1.443.   |
-|   pi   |    None    |  Ratio of a circle's circumference to its diameter; approximately 3.14159. |
-| sqrt1_2|    None    |  Square root of ½; approximately 0.707. |
-| sqrt2  |    None    |  Square root of 2; approximately 1.414. |
-| egamma |    None    |  ???, not documented. |
-| phi    |    None    |  ???, not documented. |
-| abs    |  x: real   |  Returns the absolute value of `x`. |
-| acos   |  x: real   |  Returns the arccosine of `x`. |
-| acosh  |  x: real   |  Returns the hyperbolic arccosine of `x`. |
-| asin   |  x: real   |  Returns the arcsine of `x`. |
-| asinh  |  x: real   |  Returns the hyperbolic arcsine of a `x`. |
-| atan   |  x: real   |  Returns the arctangent of `x`. |
-| atan2  |  y: real, x: real  |  Returns the arctangent of `y/x`.  |
-| atanh  |  x: real   |  Returns the hyperbolic arctangent of `x`. |
-| cbrt   |  x: real   |  Returns the cube root of `x`. |
-| ceil   |  x: real   |  Returns the smallest integer greater than or equal to `x`. |
-| cos    |  x: real   |  Returns the cosine of `x`. |
-| cosh   |  x: real   |  Returns the hyperbolic cosine of `x`. |
-| exp    |  x: real   |  Returns `e^x`, where `x` is the argument, and `e` is Euler's number (2.718…, the base of the natural logarithm). |
-| expm1  |  x: real   |  Returns subtracting 1 from `exp(x)`. |
-| floor  |  x: real   |  Returns the largest integer less than or equal to `x`. |
-| hypot  |  x: real, y: real |  Returns the `sqrt(x^2+y^2)`. |
-| log    |  x: real   |  Returns the natural logarithm (base e) of a `x`. |
-| log1p  |  x: real   |  Returns the natural logarithm (log_e; also ㏑) of `1 + x` for the number `x`. |
-| log10  |  x: real   |  Returns the base-10 logarithm of `x`. |
-| log2   |  x: real   |  Returns the base-2 logarithm of `x`. |
-| max    |  x: real, y: real |  Returns the largest of `x` and `y`. |
-| min    |  x: real, y: real |  Returns the smallest of `x` and `y`. |
-| rand?  |  TODO |  TODO |
-| round  |  x: real   |  Returns the value of the number `x` rounded to the nearest integer. |
-| sign   |  x: real   | Returns the sign of the `x`, indicating whether `x` is positive, negative, or zero. |
-| sin    |  x: real   | Returns the sine of `x`. |
-| sinh   |  x: real   | Returns the hyperbolic sine of `x`. |
-| sqrt   |  x: real   | Returns the positive square root of `x`. |
-| tan    |  x: real   | Returns the tangent of `x`. |
-| tanh   |  x: real   | Returns the hyperbolic tangent of `x`. |
-| trunc  |  x: real   | Returns the integer portion of `x`, removing any fractional digits. |
+## Math Library
+
+We support the following opcodes over real values (`f64`).\
+The documention for these functions can be found on the
+[Mozilla Development Network](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math).
+
+`e`, `ln10`, `ln2`, `log10e`, `log2e`, `pi`, `sqrt1_2`, `sqrt2`,
+`egamma`, `phi`, `abs`, `acos`, `acosh`, `asin`, `asinh`, `atan`,
+`atan2`, `atanh`, `cbrt`, `ceil`, `cos`, `cosh`, `exp`, `expm1`,
+`floor`, `hypot`, `log`, `log1p`, `log10`, `log2`, `max`, `min`,
+`round`, `sign`, `sin`, `sinh`, `sqrt`, `tan`, `tanh`, `tri`, `trunc`.
 
 ## Access Record Information
 
