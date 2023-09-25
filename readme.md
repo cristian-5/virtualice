@@ -118,7 +118,7 @@ virtualice <n>  ; set magic number and version
 
 ```
 
-### Math Library
+### Math Library [OLD]
 
 ```
 ; math library (always over real values):
@@ -166,6 +166,17 @@ virtualice <n>  ; set magic number and version
 	math.tanh
 	math.trunc
 ```
+
+## Math Library [NEW]
+|  Code  |  Operands  |  Description  |
+| :----: | :--------: | :-----------  |
+|   e    |    None    |  Euler's number and the base of natural logarithms; approximately 2.718. |
+| euler  |    None    |  Euler's number and the base of natural logarithms; approximately 2.718. |
+|  ln10  |    None    |  Natural logarithm of 10; approximately 2.303. |
+|  ln2   |    None    |  Natural logarithm of 2; approximately 0.693.  |
+| log10e |    None    |  Base-10 logarithm of E; approximately 0.434.  |
+| log2e  |    None    |  Base-2 logarithm of E; approximately 1.443.   |
+
 
 ## Access Record Information
 
