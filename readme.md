@@ -117,22 +117,6 @@ virtualice <n>  ; set magic number and version
 	memory.s [address] ; store a value  in  memory (address is 32-bits)
 
 ```
-```
-	math.floor
-	math.hypot
-	math.log
-	math.log1p
-	math.log10
-	math.log2
-	math.max
-	math.min
-	math.pow
-	math.round
-	math.sign
-	math.sin
-	math.sinh
-	math.sqrt
-	math.tan
 	math.tanh
 	math.trunc
 ```
@@ -166,7 +150,22 @@ virtualice <n>  ; set magic number and version
 | exp    |  x: real   |  Returns `e^x`, where `x` is the argument, and `e` is Euler's number (2.718…, the base of the natural logarithm). |
 | expm1  |  x: real   |  Returns subtracting 1 from `exp(x)`. |
 | floor  |  x: real   |  Returns the largest integer less than or equal to `x`. |
-
+| hypot  |  x: real, y: real |  Returns the `sqrt(x^2+y^2)`. |
+| log    |  x: real   |  Returns the natural logarithm (base e) of a `x`. |
+| log1p  |  x: real   |  Returns the natural logarithm (log_e; also ㏑) of `1 + x` for the number `x`. |
+| log10  |  x: real   |  Returns the base-10 logarithm of `x`. |
+| log2   |  x: real   |  Returns the base-2 logarithm of `x`. |
+| max    |  x: real, y: real |  Returns the largest of `x` and `y`. |
+| min    |  x: real, y: real |  Returns the smallest of `x` and `y`. |
+| rand?  |  TODO |  TODO |
+| round  |  x: real   |  Returns the value of the number `x` rounded to the nearest integer. |
+| sign   |  x: real   | Returns the sign of the `x`, indicating whether `x` is positive, negative, or zero. |
+| sin    |  x: real   | Returns the sine of `x`. |
+| sinh   |  x: real   | Returns the hyperbolic sine of `x`. |
+| sqrt   |  x: real   | Returns the positive square root of `x`. |
+| tan    |  x: real   | Returns the tangent of `x`. |
+| tanh   |  x: real   | Returns the hyperbolic tangent of `x`. |
+| trunc  |  x: real   | Returns the integer portion of `x`, removing any fractional digits. |
 
 ## Access Record Information
 
