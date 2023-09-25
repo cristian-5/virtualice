@@ -305,9 +305,14 @@ inline static bit reset_bit(u64 n, u8 i) {
 	return n & ~(1ull << (i % 64));
 }
 
-inline static i64 sign(f64 r) {
+inline static f64 sign(f64 r) {
 	if (isnan(r)) return 0;
 	return (r > 0) - (r < 0);
+}
+
+inline static f64 tri(f64 r) { // triangular function
+	if (isnan(r) | isinf(r)) return 0;
+	return fmax(1 - abs(r), 0);
 }
 
 #endif

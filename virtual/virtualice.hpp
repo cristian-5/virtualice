@@ -111,7 +111,6 @@ enum math: u8 {
 	_log2,
 	_max,
 	_min,
-	_pow,
 	_round,
 	_sign,
 	_sin,
@@ -119,6 +118,7 @@ enum math: u8 {
 	_sqrt,
 	_tan,
 	_tanh,
+	_tri,
 	_trunc
 
 };
@@ -220,6 +220,9 @@ class op {
 	VOP _compare_le = 0x76 + T;
 	VOP _compare_ge = 0x80 + T;
 	VOP _compare_g  = 0x84 + T;
+
+	COP _isnan = 0x88;
+	COP _isinf = 0x89;
 
 	// ==========================================
 

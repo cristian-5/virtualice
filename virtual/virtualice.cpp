@@ -390,14 +390,14 @@ void vm::run(arr<u8> code) {
 			case op::_math<math::_log2>:  POP_A  PUSH({ .r = log2(a.r) }); break;
 			case op::_math<math::_max>:   POP_BA PUSH({ .r = max(a.r, b.r) }); break;
 			case op::_math<math::_min>:   POP_BA PUSH({ .r = min(a.r, b.r) }); break;
-			case op::_math<math::_pow>:   POP_BA PUSH({ .r = pow(a.r, b.r) }); break;
 			case op::_math<math::_round>: POP_A  PUSH({ .r = round(a.r) }); break;
-			case op::_math<math::_sign>:  POP_A  PUSH({ .i = sign(a.r) }); break;
+			case op::_math<math::_sign>:  POP_A  PUSH({ .r = sign(a.r) }); break;
 			case op::_math<math::_sin>:   POP_A  PUSH({ .r = sin(a.r) }); break;
 			case op::_math<math::_sinh>:  POP_A  PUSH({ .r = sinh(a.r) }); break;
 			case op::_math<math::_sqrt>:  POP_A  PUSH({ .r = sqrt(a.r) }); break;
 			case op::_math<math::_tan>:   POP_A  PUSH({ .r = tan(a.r) }); break;
 			case op::_math<math::_tanh>:  POP_A  PUSH({ .r = tanh(a.r) }); break;
+			case op::_math<math::_tri>:   POP_A  PUSH({ .r = tri(a.r) }); break;
 			case op::_math<math::_trunc>: POP_A  PUSH({ .r = trunc(a.r) }); break;
 			case op::_rest_FF: break;
 		}
