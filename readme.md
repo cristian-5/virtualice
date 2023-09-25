@@ -118,20 +118,6 @@ virtualice <n>  ; set magic number and version
 
 ```
 ```
-	math.abs
-	math.acos
-	math.acosh
-	math.asin
-	math.asinh
-	math.atan
-	math.atan2
-	math.atanh
-	math.cbrt
-	math.ceil
-	math.cos
-	math.cosh
-	math.exp
-	math.expm1
 	math.floor
 	math.hypot
 	math.log
@@ -153,7 +139,7 @@ virtualice <n>  ; set magic number and version
 
 ## Math Library [NEW]
 |  Code  |  Operands  |  Description  |
-| :----: | :--------: | :-----------  |
+|  ----: | :--------: | :-----------  |
 |   e    |    None    |  Euler's number and the base of natural logarithms; approximately 2.718. |
 | euler  |    None    |  Euler's number and the base of natural logarithms; approximately 2.718. |
 |  ln10  |    None    |  Natural logarithm of 10; approximately 2.303. |
@@ -163,10 +149,23 @@ virtualice <n>  ; set magic number and version
 |   pi   |    None    |  Ratio of a circle's circumference to its diameter; approximately 3.14159. |
 | sqrt1_2|    None    |  Square root of ½; approximately 0.707. |
 | sqrt2  |    None    |  Square root of 2; approximately 1.414. |
-| egamma |    None    |  ???, not documented |
-| phi    |    None    |  ???, not documented |
-| abs    |  x: real   |  Returns the absolute value of `x` |
-
+| egamma |    None    |  ???, not documented. |
+| phi    |    None    |  ???, not documented. |
+| abs    |  x: real   |  Returns the absolute value of `x`. |
+| acos   |  x: real   |  Returns the arccosine of `x`. |
+| acosh  |  x: real   |  Returns the hyperbolic arccosine of `x`. |
+| asin   |  x: real   |  Returns the arcsine of `x`. |
+| asinh  |  x: real   |  Returns the hyperbolic arcsine of a `x`. |
+| atan   |  x: real   |  Returns the arctangent of `x`. |
+| atan2  |  y: real, x: real  |  Returns the arctangent of `y/x`.  |
+| atanh  |  x: real   |  Returns the hyperbolic arctangent of `x`. |
+| cbrt   |  x: real   |  Returns the cube root of `x`. |
+| ceil   |  x: real   |  Returns the smallest integer greater than or equal to `x`. |
+| cos    |  x: real   |  Returns the cosine of `x`. |
+| cosh   |  x: real   |  Returns the hyperbolic cosine of `x`. |
+| exp    |  x: real   |  Returns `e^x`, where `x` is the argument, and `e` is Euler's number (2.718…, the base of the natural logarithm). |
+| expm1  |  x: real   |  Returns subtracting 1 from `exp(x)`. |
+| floor  |  x: real   |  Returns the largest integer less than or equal to `x`. |
 
 
 ## Access Record Information
