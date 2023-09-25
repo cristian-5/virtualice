@@ -118,54 +118,17 @@ virtualice <n>  ; set magic number and version
 
 ```
 
-### Math Library
+## Math Library
 
-```
-; math library (always over real values):
+We support the following opcodes over real values (`f64`).\
+The documention for these functions can be found on the
+[Mozilla Development Network](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math).
 
-	math.e       ; push the euler constant
-	math.ln10    ; push the natural logarithm of 10
-	math.ln2     ; push the natural logarithm of 2
-	math.log10e  ; push the base 10 logarithm of e
-	math.log2e   ; push the base 2 logarithm of e
-	math.pi      ; push the pi constant
-	math.sqrt1_2 ; push the square root of 1/2
-	math.sqrt2   ; push the square root of 2
-	math.egamma  ; push the euler-mascheroni constant
-	math.phi	 ; push the golden ratio
-
-	math.abs
-	math.acos
-	math.acosh
-	math.asin
-	math.asinh
-	math.atan
-	math.atan2
-	math.atanh
-	math.cbrt
-	math.ceil
-	math.cos
-	math.cosh
-	math.exp
-	math.expm1
-	math.floor
-	math.hypot
-	math.log
-	math.log1p
-	math.log10
-	math.log2
-	math.max
-	math.min
-	math.pow
-	math.round
-	math.sign
-	math.sin
-	math.sinh
-	math.sqrt
-	math.tan
-	math.tanh
-	math.trunc
-```
+`e`, `ln10`, `ln2`, `log10e`, `log2e`, `pi`, `sqrt1_2`, `sqrt2`,
+`egamma`, `phi`, `abs`, `acos`, `acosh`, `asin`, `asinh`, `atan`,
+`atan2`, `atanh`, `cbrt`, `ceil`, `cos`, `cosh`, `exp`, `expm1`,
+`floor`, `hypot`, `log`, `log1p`, `log10`, `log2`, `max`, `min`,
+`round`, `sign`, `sin`, `sinh`, `sqrt`, `tan`, `tanh`, `tri`, `trunc`.
 
 ## Access Record Information
 
