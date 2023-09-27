@@ -257,6 +257,12 @@ inline void string_copy(char * d, const char * s) {
 	* d = 0x00;
 }
 
+inline i64 compare(u8 * a, u8 * b, u64 s) {
+	for (i64 i = 0; i < s; i++)
+		if (a[i] != b[i]) return i;
+	return -1;
+}
+
 inline static chr * u2x(u64 u) {
 	str result = format("0x%llX", u);
 	chr * copy = (chr *) malloc(result.length() + 1);

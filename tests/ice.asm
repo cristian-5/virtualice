@@ -1,10 +1,30 @@
 
+#subruledef REGISTER {
+	b => 0b00
+	w => 0b01
+	d => 0b10
+	q => 0b11
+}
+
+#subruledef TYPE {
+	b => 0b00
+	n => 0b00
+	i => 0b01
+	r => 0b10
+	c => 0b11
+}
+
+#subruledef ACCESS {
+	r => 0x00
+	w => 0x01
+}
+
 #ruledef {
 
 	virtualice {version: u8} => 0x696365 @ version`8
 
-	halt => 0x00
-	; rest => 0x01 ; or 0xFF for completeness
+	halt => 0x00 ; or 0xFF for completeness
+	rest => 0x01
 
 	const.b {value} => 0x02 @ value`8
 	const.w {value} => 0x03 @ value`16
@@ -12,10 +32,11 @@
 	const.q {value} => 0x05 @ value`64
 
 	; for completeness, do not use as they're not optimized
-	const.n {value} => 0x05 @ value`64
-	const.i {value} => 0x05 @ value`64
-	const.r {value} => 0x05 @ value`64
-	const.c {value} => 0x05 @ value`64
+	const.{t: TYPE} {value} => 0x05 @ value`64
+	;const.n {value} => 0x05 @ value`64
+	;const.i {value} => 0x05 @ value`64
+	;const.r {value} => 0x05 @ value`64
+	;const.c {value} => 0x05 @ value`64
 
 	const.0 => 0x06
 	const.f => 0x06
@@ -37,66 +58,36 @@
 
 	; ==========================================
 
-	add.n => 0x10
-	add.i => 0x11 ; for completeness (same as add.n)
-	add.r => 0x12
-	add.c => 0x13
+	add.{t: TYPE} => (0x10 + t)`8
+	sub.{t: TYPE} => (0x14 + t)`8
+	mul.{t: TYPE} => (0x18 + t)`8
+	div.{t: TYPE} => (0x1C + t)`8
+	mod.{t: TYPE} => (0x20 + t)`8 ; mod.c => 0x23 ; not implemented
+	pow.{t: TYPE} => (0x24 + t)`8 ; pow.c => 0x27 ; not implemented
+	inc.{t: TYPE} => (0x28 + t)`8 ; inc.c => 0x31 ; not implemented
+	dec.{t: TYPE} => (0x2C + t)`8 ; dec.c => 0x30 ; not implemented
 
-	sub.n => 0x14
-	sub.i => 0x15 ; for completeness (same as sub.n)
-	sub.r => 0x16
-	sub.c => 0x17
-
-	mul.n => 0x18
-	mul.i => 0x19
-	mul.r => 0x1A
-	mul.c => 0x1B
-
-	div.n => 0x1C
-	div.i => 0x1D
-	div.r => 0x1E
-	div.c => 0x1F
-
-	mod.n => 0x20
-	mod.i => 0x21
-	mod.r => 0x22
-	; mod.c => 0x23 ; not implemented
-
-	pow.n => 0x24
-	pow.i => 0x25
-	pow.r => 0x26
-	; pow.c => 0x27 ; not implemented
-
-	inc.n => 0x28
-	inc.i => 0x29   ; for completeness (same as inc.n)
-	inc.r => 0x30
-	; inc.c => 0x31 ; not implemented
-
-	dec.n => 0x32
-	dec.i => 0x33   ; for completeness (same as dec.n)
-	dec.r => 0x34
-	; dec.c => 0x35 ; not implemented
+	; empty instructions 0x31
 
 	; ==========================================
 
-	magnitude => 0x36
-	conjugate => 0x37
-	combine   => 0x38
-	project   => 0x39
-	project.r => 0x3A
-	project.i => 0x3B
-	imaginary => 0x3C
-
-	convert.n2r => 0x3D
-	convert.i2r => 0x3E
-	convert.r2i => 0x3F
+	load.{r: REGISTER}   {pointer: u32}  => (0x32 + r)`8 @ pointer`32
+	load.{r: REGISTER}  [{pointer: u32}] => (0x32 + r)`8 @ pointer`32
+	store.{r: REGISTER}  {pointer: u32}  => (0x36 + r)`8 @ pointer`32
+	store.{r: REGISTER} [{pointer: u32}] => (0x36 + r)`8 @ pointer`32
 
 	; ==========================================
 
-	mask.b => 0x40
-	mask.w => 0x41
-	mask.d => 0x42
-	mask.q => 0x43
+	project   => 0x3A
+	project.r => 0x3B
+	project.i => 0x3C
+	magnitude => 0x3D
+	conjugate => 0x3E
+	combine   => 0x3F
+
+	; ==========================================
+
+	mask.{r: REGISTER} => (0x40 + r)`8
 
 	bit   => 0x44
 	bit.g => 0x44 ; for completeness
@@ -130,7 +121,7 @@
 	shift.r  {value: u6} => 0x56 @ value`8
 	shift.l  {value: u6} => 0x57 @ value`8
 
-	; empty instructions 0x58 ... 0x5F
+	; empty instructions 0x58, 0x59
 
 	; ==========================================
 
@@ -147,111 +138,87 @@
 	jump.e  {address: u32} => 0x5E @ address`32
 	jump.ne {address: u32} => 0x5F @ address`32
 
-	jump.l.n  {address: u32} => 0x60 @ address`32
-	jump.l.i  {address: u32} => 0x61 @ address`32
-	jump.l.r  {address: u32} => 0x62 @ address`32
-	; jump.l.c => 0x63 not implemented
-	jump.le.n {address: u32} => 0x64 @ address`32
-	jump.le.i {address: u32} => 0x65 @ address`32
-	jump.le.r {address: u32} => 0x66 @ address`32
-	; jump.le.c => 0x67 not implemented
-	jump.n.ge {address: u32} => 0x68 @ address`32
-	jump.i.ge {address: u32} => 0x69 @ address`32
-	jump.r.ge {address: u32} => 0x6A @ address`32
-	; jump.c.ge => 0x6B not implemented
-	jump.n.g  {address: u32} => 0x6C @ address`32
-	jump.i.g  {address: u32} => 0x6D @ address`32
-	jump.r.g  {address: u32} => 0x6E @ address`32
-	; jump.c.g  => 0x6F not implemented
+	; complex jumps are not implemented:
+
+	jump.l.{ t: TYPE} {address: u32} => (0x60 + t)`8 @ address`32
+	jump.le.{t: TYPE} {address: u32} => (0x64 + t)`8 @ address`32
+	jump.ge.{t: TYPE} {address: u32} => (0x68 + t)`8 @ address`32
+	jump.g.{ t: TYPE} {address: u32} => (0x6C + t)`8 @ address`32
 
 	compare.e  {address: u32} => 0x70 @ address`32
 	compare.ne {address: u32} => 0x71 @ address`32
 
-	compare.l.n  {address: u32} => 0x72 @ address`32
-	compare.l.i  {address: u32} => 0x73 @ address`32
-	compare.l.r  {address: u32} => 0x74 @ address`32
-	; compare.l.c => 0x75 not implemented
-	compare.le.n {address: u32} => 0x76 @ address`32
-	compare.le.i {address: u32} => 0x77 @ address`32
-	compare.le.r {address: u32} => 0x78 @ address`32
-	; compare.le.c => 0x79 not implemented
-	compare.n.ge {address: u32} => 0x80 @ address`32
-	compare.i.ge {address: u32} => 0x81 @ address`32
-	compare.r.ge {address: u32} => 0x82 @ address`32
-	; compare.c.ge => 0x83 not implemented
-	compare.n.g  {address: u32} => 0x84 @ address`32
-	compare.i.g  {address: u32} => 0x85 @ address`32
-	compare.r.g  {address: u32} => 0x86 @ address`32
-	; compare.c.g  => 0x87 not implemented
+	compare.l.{ t: TYPE} {address: u32} => (0x72 + t)`8 @ address`32
+	compare.le.{t: TYPE} {address: u32} => (0x76 + t)`8 @ address`32
+	compare.ge.{t: TYPE} {address: u32} => (0x80 + t)`8 @ address`32
+	compare.g.{ t: TYPE} {address: u32} => (0x84 + t)`8 @ address`32
 
 	isnan => 0x88
 	isinf => 0x89
 
 	; ==========================================
 
-	global.r {index: u8} => 0x8A @ index`8
-	global.w {index: u8} => 0x8B @ index`8
-	global.e.r {index: u16} => 0x8C @ index`16
-	global.e.w {index: u16} => 0x8D @ index`16
+	global.{a: ACCESS} {index} => {
+		assert(index >= 0)
+		assert(index <= 0xFF)
+		(0x8A | a)`8 @ index`8
+	}
+	global.{a: ACCESS} {index} => {
+		assert(index > 0xFF)
+		(0x8C | a)`8 @ index`16
+	}
 
-	local.r {index: u8} => 0x8E @ index`8
-	local.w {index: u8} => 0x8F @ index`8
-
-	local.r.0 => 0x90
-	local.r.1 => 0x91
-	local.r.2 => 0x92
-	local.r.3 => 0x93
-	local.r.4 => 0x94
-	local.r.5 => 0x95
-	local.r.6 => 0x96
-	local.r.7 => 0x97
-
-	local.w.0 => 0x98
-	local.w.1 => 0x99
-	local.w.2 => 0x9A
-	local.w.3 => 0x9B
-	local.w.4 => 0x9C
-	local.w.5 => 0x9D
-	local.w.6 => 0x9E
-	local.w.7 => 0x9F
+	; 2 byte access of local variables
+	local.{a: ACCESS} {index: u8} => {
+		assert(index >= 8)
+		(0x8E | a)`8 @ index`8
+	}
+	; 1 byte shorthand read of local variables
+	local.r {index: u8} => {
+		assert(index < 8)
+		(0x90 + index)`8
+	}
+	; 1 byte shorthand write of local variables
+	local.w {index: u8} => {
+		assert(index < 8)
+		(0x98 + index)`8
+	}
 
 	; ==========================================
 
-	arity {code: u8} => 0xA0 @ code`8
-	arity.0 => 0xFF ; just in case, for completeness
-	arity.1 => 0xA1
-	arity.2 => 0xA2
-	arity.3 => 0xA3
-	arity.4 => 0xA4
-	arity.5 => 0xA5
-	arity.6 => 0xA6
-	arity.7 => 0xA7
-	arity.8 => 0xA8
+	; 2 byte arity set
+	arity {code: u8} => {
+		assert(code > 8)
+		0xA0 @ code`8
+	}
+	; 1 byte shorthand arity set
+	arity {code: u8} => {
+		assert(code > 0)
+		assert(code < 8)
+		(0xA0 + index)`8 @ code`8
+	}
+
+	arity 0 => 0x01 ; just in case, for completeness
 
 	; empty instructions 0xA9 ... 0xAD
 
 	; ==========================================
 
-	param.r {index: u8} => 0xAE @ index`8
-	param.w {index: u8} => 0xAF @ index`8
-
-	param.r.0 => 0xB0
-	param.r.1 => 0xB1
-	param.r.2 => 0xB2
-	param.r.3 => 0xB3
-	param.r.4 => 0xB4
-	param.r.5 => 0xB5
-	param.r.6 => 0xB6
-	param.r.7 => 0xB7
-
-	param.w.0 => 0xB8
-	param.w.1 => 0xB9
-	param.w.2 => 0xBA
-	param.w.3 => 0xBB
-	param.w.4 => 0xBC
-	param.w.5 => 0xBD
-	param.w.6 => 0xBE
-	param.w.7 => 0xBF
+	; 2 byte access of function parameters
+	param.{a: ACCESS} {index: u8} => {
+		assert(index >= 8)
+		(0xAE | a)`8 @ index`8
+	}
+	; 1 byte shorthand read of function parameters
+	param.r {index: u8} => {
+		assert(index < 8)
+		(0xB0 + index)`8
+	}
+	; 1 byte shorthand write of function parameters
+	param.w {index: u8} => {
+		assert(index < 8)
+		(0xB8 + index)`8
+	}
 
 	; ==========================================
 
@@ -266,6 +233,12 @@
 	return   => 0xCB ; return (Call Back) a value
 	return.v => 0xCC ; return void
 
+	; ==========================================
+
+	convert.n2r => 0xCD
+	convert.i2r => 0xCE
+	convert.r2i => 0xCF
+
 	; === MATH FUNCTIONS =======================
 
 	e       => 0xD0
@@ -278,7 +251,7 @@
 	sqrt1_2 => 0xD6
 	sqrt2   => 0xD7
 	egamma  => 0xD8
-	phi	 => 0xD9
+	phi	    => 0xD9
 
 	abs   => 0xDA
 	acos  => 0xDB
@@ -312,45 +285,23 @@
 	tri   => 0xF7
 	trunc => 0xF8
 
+	imaginary => 0xF9
+
 	; ==========================================
 
-	rest => 0xFF ; or 0x01 for completeness
+	; halt => 0xFF ; or 0x00 for completeness
 
 }
 
-estream = 0xE5
-ostream = 0x05
-edata   = 0xED
-odata   = 0x0D
-eflush  = 0xEF
-oflush  = 0x0F
-istream = 0x15
+; memory management
 
-fork    = 0xF0
-join    = 0x10
-sleep   = 0x57
-wait    = 0xA1
-lock    = 0x88
-release = 0x33
-
-u2s = 0xCA
-i2s = 0xCB
-s2u = 0xCC
-s2i = 0xCD
-f2s = 0xCE
-s2f = 0xCF
-
-allocate   = 0xA7
-deallocate = 0xDA
-reallocate = 0x2A
-copy       = 0xC0
-load       = 0x70
-zeros      = 0x00
-fill       = 0xF1
-compare    = 0xC2
-
-debug  = 0xDE
-sign   = 0x51
-time   = 0x71
-seed   = 0x5E
-random = 0x3A
+#const memory_grow    = 0x50
+#const memory_shrink  = 0x54
+#const memory_size    = 0x51
+#const memory_page    = 0x2A
+#const memory_pages   = 0x25
+#const memory_copy    = 0xC0
+#const memory_load    = 0x70
+#const memory_zeros   = 0x00
+#const memory_fill    = 0xF1
+#const memory_compare = 0xC2

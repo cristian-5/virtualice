@@ -77,6 +77,8 @@ u8  vm::getB(void * p) { return (* ((u8  *)p)) & B_MASK; }
 mtx vm::critical;
 mtx vm::global;
 
+arr<u8> vm::memory;
+
 void vm::run(arr<u8> code) {
 	u8 * i = code.data;
 	// check for magic number:
@@ -88,8 +90,8 @@ void vm::run(arr<u8> code) {
 	// pcg::seed((u64)time(nullptr));
 	while (true) {
 		switch (* i) {
-			case op::_halt: exit(0);
-			case op::_rest_01: break;
+			case op::_halt_00: exit(0);
+			case op::_rest: break;
 			case op::_const<dta::b>: PUSH({ .n = getB(++i) }); break;
 			case op::_const<dta::w>: PUSH({ .n = getW(++i) }); SKIP(2); continue;
 			case op::_const<dta::d>: PUSH({ .n = getD(++i) }); SKIP(4); continue;
@@ -133,6 +135,14 @@ void vm::run(arr<u8> code) {
 			case op::_dec<typ::i>: POP_A PUSH({ .i = a.i - 1 }); break;
 			case op::_dec<typ::r>: POP_A PUSH({ .r = a.r - 1.0 }); break;
 			// op::_dec<typ::c> is not defined
+			case op::_memory_l<dta::b>: PUSH({ .n = memory.data[getW(++i)] }); SKIP(2); continue;
+			case op::_memory_l<dta::w>: PUSH({ .n = ((u16 *)memory.data)[getW(++i)] }); SKIP(2); continue;
+			case op::_memory_l<dta::d>: PUSH({ .n = ((u32 *)memory.data)[getW(++i)] }); SKIP(2); continue;
+			case op::_memory_l<dta::q>: PUSH({ .n = ((u64 *)memory.data)[getW(++i)] }); SKIP(2); continue;
+			case op::_memory_s<dta::b>: POP_A memory.data[getW(++i)] = a.n; SKIP(2); continue;
+			case op::_memory_s<dta::w>: POP_A ((u16 *)memory.data)[getW(++i)] = a.n; SKIP(2); continue;
+			case op::_memory_s<dta::d>: POP_A ((u32 *)memory.data)[getW(++i)] = a.n; SKIP(2); continue;
+			case op::_memory_s<dta::q>: POP_A ((u64 *)memory.data)[getW(++i)] = a.n; SKIP(2); continue;
 			case op::_magnitude: POP_A PUSH({ .r = absolute(a.c) }); break;
 			case op::_conjugate: POP_A PUSH({ .c = ~ a.c }); break;
 			case op::_combine: POP_BA PUSH({ .c = { (f32)a.r, (f32)b.r } }); break;
@@ -143,10 +153,6 @@ void vm::run(arr<u8> code) {
 			break;
 			case op::_project_r: POP_A PUSH({ .r = (f64)a.c.r }); break;
 			case op::_project_i: POP_A PUSH({ .r = (f64)a.c.i }); break;
-			case op::_imaginary: PUSH({ .c = { 0.0, 1.0 } }); break;
-			case op::_convert_n2r: POP_A PUSH({ .r = (f64)a.n }); break;
-			case op::_convert_i2r: POP_A PUSH({ .r = (f64)a.i }); break;
-			case op::_convert_r2i: POP_A PUSH({ .i = (i64)a.r }); break;
 			case op::_mask<dta::b>: PUSH(V_CAST(stack.pop(), B)); break;
 			case op::_mask<dta::w>: PUSH(V_CAST(stack.pop(), W)); break;
 			case op::_mask<dta::d>: PUSH(V_CAST(stack.pop(), D)); break;
@@ -203,6 +209,8 @@ void vm::run(arr<u8> code) {
 			case  op::_compare_g<typ::n>: POP_BA PUSH({ .n = (a.n >  b.n) }); break;
 			case  op::_compare_g<typ::i>: POP_BA PUSH({ .i = (a.i >  b.i) }); break;
 			case  op::_compare_g<typ::r>: POP_BA PUSH({ .i = (a.r >  b.r) }); break;
+			case op::_isnan: POP_A PUSH({ .n = isnan(a.r) }); break;
+			case op::_isinf: POP_A PUSH({ .n = isinf(a.r) }); break;
 			case op::_global_r: PUSH(stack[getB(++i)]); break;
 			case op::_global_w: stack[getB(++i)] = stack.pop(); break;
 			case op::_global_e_r: PUSH(stack[getW(++i)]); SKIP(2); continue;
@@ -282,6 +290,35 @@ void vm::run(arr<u8> code) {
 			continue;
 			case op::_call_k:
 				switch (getB(++i)) {
+					// ==== Memory Functions ===================================
+					case mem::grow:
+						POP_A
+						// works in both cases because count is initially 0:
+						memory.count += a.n * 4096; // 4 KB
+						if (memory.count != 0)
+							 memory.data = (u8 *) realloc(memory.data, memory.count);
+						else memory.data = (u8 *)  malloc(memory.count);
+					break;
+					case mem::shrink:
+						POP_A
+						memory.count -= a.n * 4096; // 4 KB
+						if (memory.count != 0)
+							memory.data = (u8 *) realloc(memory.data, memory.count);
+					break;
+					case mem::size:  PUSH({ .n = memory.count }); break;
+					case mem::page:  PUSH({ .n = 4096 /* 4 KB */ }); break;
+					case mem::pages: PUSH({ .n = memory.count / 4096 }); break;
+					case mem::copy: POP_AB memcpy(b.p, a.p, stack.pop().n); break;
+					case mem::load: POP_AB memcpy(b.p, & code.data[a.n], stack.pop().n); break;
+					case mem::zeros: memset(stack.pop().p, 0, stack.pop().n); break;
+					case mem::fill: POP_AB memset(b.p, (u8)a.n, stack.pop().n); break;
+					case mem::compare:
+						stack.push({ .i = compare(
+							(u8 *) stack.pop().p,
+							(u8 *) stack.pop().p,
+							stack.pop().n
+						) });
+					break;
 					/*case krn::estream: e_stream(stack.pop().p); break;
 					case krn::ostream: o_stream(stack.pop().p); break;
 					case krn::edata:   e_stream(& code.data[stack.pop().i]); break;
@@ -321,30 +358,6 @@ void vm::run(arr<u8> code) {
 					case krn::_s2f:
 						try { stack.push({ .r = s2f((chr *)stack.pop().p) }); }
 						catch (invalid_format) { throw; }
-					break;
-
-					case krn::allocate:
-						stack.push({ .p = malloc(stack.pop().i) });
-					break;
-					case krn::deallocate: free(stack.pop().p); break;
-					case krn::reallocate:
-						stack.push({ .p = realloc(stack.pop().p, stack.pop().i) });
-					break;
-					case krn::copy: POP_AB memcpy(b.p, a.p, stack.pop().i);
-					break;
-					case krn::load: POP_AB memcpy(b.p, & code.data[a.i], stack.pop().i); break;
-					case krn::zeros:
-						memset(stack.pop().p, 0x00, stack.pop().i);
-					break;
-					case krn::fill:
-						POP_AB memset(b.p, (u8)a.i, stack.pop().i);
-					break;
-					case krn::compare:
-						stack.push({ .i = (memcmp(
-							stack.pop().p,
-							stack.pop().p,
-							stack.pop().i
-						) & 1ull) });
 					break;*/
 					case krn::debug:
 						puts("= STACK ========================================");
@@ -357,6 +370,9 @@ void vm::run(arr<u8> code) {
 					//case krn::random: stack.push({ .i = pcg::next() }); break;
 				}
 			break;
+			case op::_convert_n2r: POP_A PUSH({ .r = (f64)a.n }); break;
+			case op::_convert_i2r: POP_A PUSH({ .r = (f64)a.i }); break;
+			case op::_convert_r2i: POP_A PUSH({ .i = (i64)a.r }); break;
 			// === MATH FUNCTIONS ==============================================
 			case op::_math<math::_e>:       PUSH({ .r = numbers::e_v<f64> }); break;
 			case op::_math<math::_ln10>:    PUSH({ .r = numbers::ln10_v<f64> }); break;
@@ -399,7 +415,8 @@ void vm::run(arr<u8> code) {
 			case op::_math<math::_tanh>:  POP_A  PUSH({ .r = tanh(a.r) }); break;
 			case op::_math<math::_tri>:   POP_A  PUSH({ .r = tri(a.r) }); break;
 			case op::_math<math::_trunc>: POP_A  PUSH({ .r = trunc(a.r) }); break;
-			case op::_rest_FF: break;
+			case op::_math<math::_imaginary>: PUSH({ .c = { 0.0, 1.0 } }); break;
+			case op::_halt_FF: exit(0);
 		}
 		++i;
 	}

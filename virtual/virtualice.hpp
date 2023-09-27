@@ -75,6 +75,20 @@ class krn {
 
 };
 
+class mem {
+public:
+	TYP grow    = 0x50;
+	TYP shrink  = 0x54;
+	TYP size    = 0x51;
+	TYP page    = 0x2A;
+	TYP pages   = 0x25;
+	TYP copy    = 0xC0;
+	TYP load    = 0x70;
+	TYP zeros   = 0x00;
+	TYP fill    = 0xF1;
+	TYP compare = 0xC2;
+};
+
 enum math: u8 {
 
 	_i = 0,
@@ -119,7 +133,8 @@ enum math: u8 {
 	_tan,
 	_tanh,
 	_tri,
-	_trunc
+	_trunc,
+	_imaginary
 
 };
 
@@ -127,8 +142,8 @@ class op {
 
 	public:
 
-	COP _halt = 0x00;
-	COP _rest_01 = 0x01;
+	COP _halt_00 = 0x00;
+	COP _rest = 0x01;
 
 	VOP _const = 0x02 + T;
 	COP _const_0 = 0x06;
@@ -152,21 +167,21 @@ class op {
 	VOP _pow = 0x24 + T;
 
 	VOP _inc = 0x28 + T;
-	VOP _dec = 0x32 + T;
+	VOP _dec = 0x2C + T;
 
 	// ==========================================
 
-	COP _magnitude = 0x36;
-	COP _conjugate = 0x37;
-	COP _combine   = 0x38;
-	COP _project   = 0x39;
-	COP _project_r = 0x3A;
-	COP _project_i = 0x3B;
-	COP _imaginary = 0x3C;
+	VOP _memory_l = 0x32 + T;
+	VOP _memory_s = 0x36 + T;
 
-	COP _convert_n2r = 0x3D;
-	COP _convert_i2r = 0x3E;
-	COP _convert_r2i = 0x3F;
+	// ==========================================
+
+	COP _project   = 0x3A;
+	COP _project_r = 0x3B;
+	COP _project_i = 0x3C;
+	COP _magnitude = 0x3D;
+	COP _conjugate = 0x3E;
+	COP _combine   = 0x3F;
 
 	// ==========================================
 
@@ -260,11 +275,17 @@ class op {
 
 	// ==========================================
 
+	COP _convert_n2r = 0xCD;
+	COP _convert_i2r = 0xCE;
+	COP _convert_r2i = 0xCF;
+
+	// ==========================================
+
 	VOP _math = 0xCF + T;
 
 	// ==========================================
 
-	COP _rest_FF = 0xFF;
+	COP _halt_FF = 0xFF;
 
 };
 
@@ -297,6 +318,8 @@ class vm {
 	inline static u8  getB(void * p);
 
 	static mtx critical, global;
+
+	static arr<u8> memory;
 
 	public:
 

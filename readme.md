@@ -4,18 +4,20 @@
 Stack based vm for super fast execution.
 It currently supports the following features:
 
-- [x] 64bit signed and unsigned **integers**
-- [x] 64bit **floating** point numbers
-- [x] 64bit **complex** numbers (`f32` real, `f32` imaginary)
-- [x] **control flow** jump and compare instructions
-- [x] **stack based** arithmetic operations on pure types
-- [x] **bitwise** and **boolean** operations
-- [x] *global* and *local* variables
-- [x] **functions** with parameters
-- [x] comprehensive **math** library
-- [ ] **memory** management [page model](https://en.wikipedia.org/wiki/Memory_paging)
-- [ ] **threads**, [fork-join model](https://en.wikipedia.org/wiki/Fork%E2%80%93join_model)
-- [ ] **networks** (probably [Berkeley sockets](https://en.wikipedia.org/wiki/Berkeley_sockets))
+✅ → 64bit signed and unsigned **integers**
+✅ → 64bit **floating** point numbers
+✅ → 64bit **complex** numbers (`f32` real, `f32` imaginary)
+✅ → **control flow** jump and compare instructions
+✅ → **stack based** arithmetic operations on pure types
+✅ → **bitwise** and **boolean** operations
+✅ → *global* and *local* variables
+✅ → **functions** with parameters
+✅ → opcodes for a comprehensive **math** library
+✅ → **memory** management [page model](https://en.wikipedia.org/wiki/Memory_paging)
+🔘 → **threads**, [fork-join model](https://en.wikipedia.org/wiki/Fork%E2%80%93join_model)
+🔘 → **file system**, [unix model](https://en.wikipedia.org/wiki/Unix_filesystem)
+🔘 → **files**, [posix model](https://en.wikipedia.org/wiki/Unistd.h)
+🔘 → **networks** (probably [Berkeley sockets](https://en.wikipedia.org/wiki/Berkeley_sockets))
 
 ## Architecture
 
@@ -92,33 +94,29 @@ virtualice <n>  ; set magic number and version
 	call.l             ; indirect lambda call
 
 	arity   <n>        ; sets the parameters to n
-	arity.[0...7]      ; shorthand for arity up to 8
 
 	return             ; returns a value
 	return.v           ; returns void
 
 ; global and local variables, function parameters:
 
-	global.r       <index> ; read  a global variable (8 bits operand)
-	global.w       <index> ; write a global variable (8 bits operand)
-	global.e.[r|w] <index> ; read / write a global (extended 16 bits operand)
+	global.r       <index> ; read  a global variable
+	global.w       <index> ; write a global variable
 
 	local.r  <index>    ; read  a local variable
 	local.w  <index>    ; write a local variable
-	local.[r|w].[0...7] ; shorthand for reading / writing first 8 locals
 
 	param.r  <index>    ; read  a function parameter
 	param.w  <index>    ; write a function parameter
-	param.[r|w].[0...7] ; shorthand for reading / writing first 8 parameters
 
-; program data, main memory:
+; memory load, store, pointers:
 
-	memory.l [address] ; load  a value from memory (address is 32-bits)
-	memory.s [address] ; store a value  in  memory (address is 32-bits)
+	load.[b|w|d|q]  [address] ; load  a value from memory
+	store.[b|w|d|q] [address] ; store a value  in  memory
 
 ```
 
-## Math Library
+## Math Library ByteCode
 
 We support the following opcodes over real values (`f64`).\
 The documention for these functions can be found on the
@@ -140,9 +138,31 @@ The documention for these functions can be found on the
 +--------+------------------------+--------------------------------+
 ```
 
-## Kernel functions
+## Kernel Functions
 
-> 🚫 **Critical**: **DO NOT** use any of these as they need revision.
+The following tables contain codes for kernel functions.\
+They work as normal functions, expecting parameters to be passed in reverse.\
+To call one of these you can use their name or hex code (`call.k memory_size`).
+
+### Memory Management Functions
+
+|HEX | Prototype                               | Description                                                          |
+|:--:|:----------------------------------------|:---------------------------------------------------------------------|
+|`50`|`memory_grow(p: u64)`                    |*Grows the memory by `p` pages.*                                      |
+|`54`|`memory_shrink(p: u64)`                  |*Shrinks the memory by `p` pages.*                                    |
+|`51`|`memory_size(): u64`                     |*Returns the memory size in bytes.*                                   |
+|`2A`|`memory_page(): u64`                     |*Returns the page size in bytes (arch. dependent, usually `4KB`).*    |
+|`25`|`memory_pages(): u64`                    |*Returns the number of allotted pages.*                               |
+|`C0`|`memory_copy(d: *, s: *, n: u64)`        |*Copies `n` bytes from source `s` to destination `d`.*                |
+|`70`|`memory_load(d: *, s: u32, n: u64)`      |*Loads `n` bytes from code address `s` to destination `d`.*           |
+|`00`|`memory_zeros(p: *, n: u64)`             |*Writes `0` to `p`, for `n` consecutive bytes.*                       |
+|`F1`|`memory_fill(b: byt, p: *, n: u64)`      |*Fills `p` with `b`, for `n` consecutive bytes.*                      |
+|`C2`|`memory_compare(a: *, b: *, n: u64): i64`|*Compares `n` bytes of `a`, `b`. Returns first different byte or `-1`*|
+
+> The usage of unowned memory will cause a bad
+> access fault resulting in a immediate crash.
+
+> 🚫 **Critical**: **DO NOT** use any of the following functions as they need revision.
 
 ### I/O functions
 
@@ -188,22 +208,6 @@ The documention for these functions can be found on the
 > The strings are always null terminated *heap* arrays of characters `[chr]`.
 > The conversions from string to [`u64`, `i64`, `f64`] might fail
 > and set the exception flag before returning without result.
-
-### Memory management functions
-
-| HEX | Prototype                               | Description                                      |
-|:---:|:---------------------------------------:|:-------------------------------------------------|
-|`A7` | `allocate(n: u64): [*];`                | *Allocates `n` bytes, returns the new address.*  |
-|`DA` | `deallocate(p: [*]);`                   | *Deallocates memory from address `p`.*           |
-|`2A` | `reallocate(p: [*], n: u64): [*];`      | *Reallocates `n` bytes trying to resize `p`.*    |
-|`C0` | `copy(s: [*], d: [*], n: u64): [*];`    | *Copies `n` bytes from `s` to `d`.*              |
-|`70` | `load(s: u32, d: [*], n: u64): [*];`    | *Loads `n` bytes from code index `s` to `d`.*    |
-|`00` | `zeros(p: [*], n: u64): [*];`           | *Writes `0` to `p`, for `n` consecutive bytes.*  |
-|`F1` | `fill(b: byt, p: [*], n: u64): [*];`    | *Fills `p` with `b`, for `n` consecutive bytes.* |
-|`C2` | `compare(a: [*], b: [*], n: u64): [*];` | *Compares `a`, `b`, for `n` consecutive bytes.*  |
-
-> The usage of unallocated or unowned memory will cause
-> a bad access fault resulting in a immediate crash.
 
 ### Misc functions
 
