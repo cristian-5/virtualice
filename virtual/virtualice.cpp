@@ -72,6 +72,39 @@ u16 vm::getW(void * p) {
 [[gnu::always_inline]]
 u8  vm::getB(void * p) { return (* ((u8  *)p)) & B_MASK; }
 
+// BUG: this does not work!
+[[gnu::always_inline]]
+void vm::setQ(void * p, u64 v) {
+    if constexpr (little_endian) {
+        (* ((u64 *)p)) = (v << 56) |
+			((v << 40) & 0x00FF000000000000) |
+			((v << 24) & 0x0000FF0000000000) |
+			((v << 8)  & 0x000000FF00000000) |
+			((v >> 8)  & 0x00000000FF000000) |
+			((v >> 24) & 0x0000000000FF0000) |
+			((v >> 40) & 0x000000000000FF00) |
+			 (v >> 56);
+    } else (* ((u64 *)p)) = v;
+}
+// BUG: this does not work!
+[[gnu::always_inline]]
+void vm::setD(void * p, u32 v) {
+    if constexpr (little_endian) {
+        (* ((u32 *)p)) = (v << 24) |
+			((v << 16) & 0x00FF0000) |
+			((v << 8)  & 0x0000FF00) |
+			 (v >> 24);
+    } else (* ((u32 *)p)) = v;
+}
+[[gnu::always_inline]]
+void vm::setW(void * p, u16 v) {
+	if constexpr (little_endian) {
+		(* ((u16 *)p)) = (v << 8 | v >> 8) & W_MASK;
+	} else (* ((u16 *)p)) = v;
+}
+[[gnu::always_inline]]
+void vm::setB(void * p, u8 v) { (* ((u8  *)p)) = v; }
+
 #undef PU8
 
 mtx vm::critical;
@@ -135,14 +168,14 @@ void vm::run(arr<u8> code) {
 			case op::_dec<typ::i>: POP_A PUSH({ .i = a.i - 1 }); break;
 			case op::_dec<typ::r>: POP_A PUSH({ .r = a.r - 1.0 }); break;
 			// op::_dec<typ::c> is not defined
-			case op::_memory_l<dta::b>: PUSH({ .n = memory.data[getW(++i)] }); SKIP(2); continue;
-			case op::_memory_l<dta::w>: PUSH({ .n = ((u16 *)memory.data)[getW(++i)] }); SKIP(2); continue;
-			case op::_memory_l<dta::d>: PUSH({ .n = ((u32 *)memory.data)[getW(++i)] }); SKIP(2); continue;
-			case op::_memory_l<dta::q>: PUSH({ .n = ((u64 *)memory.data)[getW(++i)] }); SKIP(2); continue;
-			case op::_memory_s<dta::b>: POP_A memory.data[getW(++i)] = a.n; SKIP(2); continue;
-			case op::_memory_s<dta::w>: POP_A ((u16 *)memory.data)[getW(++i)] = a.n; SKIP(2); continue;
-			case op::_memory_s<dta::d>: POP_A ((u32 *)memory.data)[getW(++i)] = a.n; SKIP(2); continue;
-			case op::_memory_s<dta::q>: POP_A ((u64 *)memory.data)[getW(++i)] = a.n; SKIP(2); continue;
+			case op::_memory_l<dta::b>: PUSH({ .n = getB(memory.data + getD(++i)) }); SKIP(4); continue;
+			case op::_memory_l<dta::w>: PUSH({ .n = getW(memory.data + getD(++i)) }); SKIP(4); continue;
+			case op::_memory_l<dta::d>: PUSH({ .n = getD(memory.data + getD(++i)) }); SKIP(4); continue;
+			case op::_memory_l<dta::q>: PUSH({ .n = getQ(memory.data + getD(++i)) }); SKIP(4); continue;
+			case op::_memory_s<dta::b>: POP_A setB(memory.data + getD(++i), a.n); SKIP(4); continue;
+			case op::_memory_s<dta::w>: POP_A setW(memory.data + getD(++i), a.n); SKIP(4); continue;
+			case op::_memory_s<dta::d>: POP_A setD(memory.data + getD(++i), a.n); SKIP(4); continue;
+			case op::_memory_s<dta::q>: POP_A setQ(memory.data + getD(++i), a.n); SKIP(4); continue;
 			case op::_magnitude: POP_A PUSH({ .r = absolute(a.c) }); break;
 			case op::_conjugate: POP_A PUSH({ .c = ~ a.c }); break;
 			case op::_combine: POP_BA PUSH({ .c = { (f32)a.r, (f32)b.r } }); break;

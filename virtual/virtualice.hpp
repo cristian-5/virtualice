@@ -300,22 +300,23 @@ class vm {
 
 	private:
 
-	// ========= MICRO VOPIMISATIONS =========
-	// Equivalent to: "mov reg, dword ptr [p]"
-	// where 'reg' is the right register size,
-	// the compiler will always remove N_MASK.
-
 	[[gnu::always_inline]]
 	inline static u64 getQ(void * p);
-
 	[[gnu::always_inline]]
 	inline static u32 getD(void * p);
-
 	[[gnu::always_inline]]
 	inline static u16 getW(void * p);
-
 	[[gnu::always_inline]]
 	inline static u8  getB(void * p);
+
+	[[gnu::always_inline]]
+	inline static void setQ(void * p, u64 v);
+	[[gnu::always_inline]]
+	inline static void setD(void * p, u32 v);
+	[[gnu::always_inline]]
+	inline static void setW(void * p, u16 v);
+	[[gnu::always_inline]]
+	inline static void setB(void * p, u8  v);
 
 	static mtx critical, global;
 
@@ -323,15 +324,12 @@ class vm {
 
 	public:
 
-	/*!
-	 *    + == VM usage ========================= +
-	 *    | The code arr<u8> must end with a halt |
-	 *    | instruction. The control flow will be |
-	 *    | passed to threads when encountering a |
-	 *    | fork instruction.                     |
-	 *    + ------------------------------------- +
-	!*/
-	
+	///  + == VM usage ========================= +
+	///  | The code arr<u8> must end with a halt |
+	///  | instruction. The control flow will be |
+	///  | passed to threads when encountering a |
+	///  | fork instruction.                     |
+	///  + ------------------------------------- +
 	static void run(arr<u8> code);
 
 };

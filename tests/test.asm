@@ -8,18 +8,12 @@ main:
 	const.b 1
 	call.k memory_grow
 
-	call.k memory_size
+	const.w 30
+	store.w  [0x50] ; store `30` in address 0x50
 
 	call.k 0xDE ; debug (nothing on the stack)
 
-	halt
-
-	const.b 30
-	store.b  [0x50] ; store `30` in address 0x50
-
-	call.k 0xDE ; debug (nothing on the stack)
-
-	load.b   [0x50] ; load from address 0x50
+	load.w   [0x50] ; load from address 0x50
 
 	call.k 0xDE ; debug (30 on the stack)
 
