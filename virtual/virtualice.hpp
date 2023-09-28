@@ -310,13 +310,22 @@ class vm {
 	inline static u8  getB(void * p);
 
 	[[gnu::always_inline]]
-	inline static void setQ(void * p, u64 v);
+	inline static void storeQ(void * p, u64 v);
 	[[gnu::always_inline]]
-	inline static void setD(void * p, u32 v);
+	inline static void storeD(void * p, u32 v);
 	[[gnu::always_inline]]
-	inline static void setW(void * p, u16 v);
+	inline static void storeW(void * p, u16 v);
 	[[gnu::always_inline]]
-	inline static void setB(void * p, u8  v);
+	inline static void storeB(void * p, u8  v);
+
+	[[gnu::always_inline]]
+	inline static u64 loadQ(void * p);
+	[[gnu::always_inline]]
+	inline static u32 loadD(void * p);
+	[[gnu::always_inline]]
+	inline static u16 loadW(void * p);
+	[[gnu::always_inline]]
+	inline static u8  loadB(void * p);
 
 	static mtx critical, global;
 
