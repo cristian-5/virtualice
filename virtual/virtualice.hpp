@@ -76,7 +76,7 @@ class krn {
 };
 
 class mem {
-public:
+	public:
 	TYP grow    = 0x50;
 	TYP shrink  = 0x54;
 	TYP size    = 0x51;
@@ -132,9 +132,7 @@ enum math: u8 {
 	_sqrt,
 	_tan,
 	_tanh,
-	_tri,
 	_trunc,
-	_imaginary
 
 };
 
@@ -176,14 +174,12 @@ class op {
 
 	// ==========================================
 
-	COP _project   = 0x3A;
-	COP _project_r = 0x3B;
-	COP _project_i = 0x3C;
-	COP _magnitude = 0x3D;
-	COP _conjugate = 0x3E;
-	COP _combine   = 0x3F;
-
-	// ==========================================
+	COP _shift    = 0x3A;
+	COP _shift_r  = 0x3B;
+	COP _shift_l  = 0x3C;
+	COP _rotate   = 0x3D;
+	COP _rotate_r = 0x3E;
+	COP _rotate_l = 0x3F;
 
 	VOP _mask = 0x40 + T;
 
@@ -208,14 +204,10 @@ class op {
 	COP _reverse    = 0x52;
 	COP _complement = 0x53;
 
-	COP _shift_r  = 0x54;
-	COP _shift_l  = 0x55;
-	COP _rotate_r = 0x56;
-	COP _rotate_l = 0x57;
-
 	// ==========================================
 
-	COP _jump    = 0x5A;
+	COP _jump_r  = 0x59;
+	COP _jump_a  = 0x5A;
 	COP _jump_z  = 0x5B;
 	COP _jump_o  = 0x5C;
 	COP _jump_nz = 0x5D;
@@ -236,8 +228,8 @@ class op {
 	VOP _compare_ge = 0x80 + T;
 	VOP _compare_g  = 0x84 + T;
 
-	COP _isnan = 0x88;
-	COP _isinf = 0x89;
+	COP _is_nan = 0x88;
+	COP _is_inf = 0x89;
 
 	// ==========================================
 
@@ -268,7 +260,8 @@ class op {
 
 	COP _call_k = 0xC0;
 	COP _call_l = 0xC7;
-	COP _call   = 0xCA;
+	COP _call_e = 0xC9; // extended call (3 bytes)
+	COP _call   = 0xCA; // 2 byte call
 
 	COP _return   = 0xCB;
 	COP _return_v = 0xCC;
@@ -282,6 +275,16 @@ class op {
 	// ==========================================
 
 	VOP _math = 0xCF + T;
+
+	// ==========================================
+
+	COP _imaginary = 0xF8;
+	COP _combine   = 0xF9;
+	COP _project   = 0xFA;
+	COP _project_r = 0xFB;
+	COP _project_i = 0xFC;
+	COP _magnitude = 0xFD;
+	COP _conjugate = 0xFE;
 
 	// ==========================================
 

@@ -62,6 +62,13 @@ static constexpr TYP rotateR(TYP v, u8 n = 1) {
 	return (v >> n) | (v << (sizeof(TYP) * 8 - 1));
 }
 
+template <typename TYP>
+static constexpr TYP rotate(TYP v, i64 i = 1) {
+	static_assert(std::is_unsigned<TYP>::value);
+	if (i < 0) return rotateR(v, -i);
+	return rotateL(v, i);
+}
+
 static constexpr bln little_endian = std::endian::native == std::endian::little;
 static constexpr bln big_endian = std::endian::native == std::endian::big;
 
@@ -314,11 +321,6 @@ inline static bit reset_bit(u64 n, u8 i) {
 inline static f64 sign(f64 r) {
 	if (isnan(r)) return 0;
 	return (r > 0) - (r < 0);
-}
-
-inline static f64 tri(f64 r) { // triangular function
-	if (isnan(r) | isinf(r)) return 0;
-	return fmax(1 - abs(r), 0);
 }
 
 #endif

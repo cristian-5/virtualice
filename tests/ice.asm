@@ -1,4 +1,6 @@
 
+#once
+
 #subruledef REGISTER {
 	b => 0b00
 	w => 0b01
@@ -19,6 +21,14 @@
 	w => 0x01
 }
 
+#const    U8_MAX = 0xFF
+#const   U16_MAX = 0xFFFF
+#const   U32_MAX = 0xFFFFFFFF
+#const  U8_START = 0x00
+#const U16_START = 0x100
+#const U32_START = 0x10000
+#const U64_START = 0x100000000
+
 #ruledef {
 
 	virtualice {version: u8} => 0x696365 @ version`8
@@ -31,12 +41,27 @@
 	const.d {value} => 0x04 @ value`32 ; equivalent to `address`
 	const.q {value} => 0x05 @ value`64
 
-	; for completeness, do not use as they're not optimized
-	const.{t: TYPE} {value} => 0x05 @ value`64
-	;const.n {value} => 0x05 @ value`64
-	;const.i {value} => 0x05 @ value`64
-	;const.r {value} => 0x05 @ value`64
-	;const.c {value} => 0x05 @ value`64
+	const.n {value: u64} => {
+		assert(value <= U8_MAX)
+		0x02 @ value`8
+	}
+	const.n {value: u64} => {
+		assert(value > U8_MAX)
+		assert(value <= U16_MAX)
+		0x03 @ value`16
+	}
+	const.n {value: u64} => {
+		assert(value > U16_MAX)
+		assert(value <= U32_MAX)
+		0x04 @ value`32
+	}
+	const.n {value: u64} => {
+		assert(value > U32_MAX)
+		0x05 @ value`64
+	}
+	; const.i {value} => 0x05 @ value`64
+	; const.r {value} => 0x05 @ value`64
+	; const.c {value} => 0x05 @ value`64
 
 	const.0 => 0x06
 	const.f => 0x06
@@ -78,14 +103,14 @@
 
 	; ==========================================
 
-	project   => 0x3A
-	project.r => 0x3B
-	project.i => 0x3C
-	magnitude => 0x3D
-	conjugate => 0x3E
-	combine   => 0x3F
+	; 64 = 2^6 so 5 bits are enough for rotate
 
-	; ==========================================
+	rotate               => 0x3A
+	rotate.r {value: u5} => 0x3B @ value`8
+	rotate.l {value: u5} => 0x3C @ value`8
+	shift				 => 0x3D
+	shift.r  {value: u6} => 0x3E @ value`8
+	shift.l  {value: u6} => 0x3F @ value`8
 
 	mask.{r: REGISTER} => (0x40 + r)`8
 
@@ -114,47 +139,93 @@
 	complement => 0x52
 	reverse    => 0x53
 
-	; 64 = 2^6 so 5 bits are enough for rotate
-
-	rotate.r {value: u5} => 0x54 @ value`8
-	rotate.l {value: u5} => 0x55 @ value`8
-	shift.r  {value: u6} => 0x56 @ value`8
-	shift.l  {value: u6} => 0x57 @ value`8
-
-	; empty instructions 0x58, 0x59
+	; empty instructions 0x54 ... 0x58
 
 	; ==========================================
 
-	jump {address: u32} => 0x5A @ address`32
+	jump {address} => { ; 2 byte relative jump
+		relative = address - $ - 1
+		assert(relative >= I8_MIN && relative <= I8_MAX)
+		0x59 @ relative`8
+	}
+	jump {address} => { ; relative jump overflow fix
+		relative = address - $ - 1
+		assert(relative < I8_MIN || relative > I8_MAX)
+		asm {
+			const.n {address}
+			jump
+		}
+	}
+	jump => 0x5A ; stack based absolute jump
 
-	jump.0 {address: u32} => 0x5B @ address`32
-	jump.z {address: u32} => 0x5B @ address`32 ; for completeness
-	jump.f {address: u32} => 0x5B @ address`32 ; for completeness
-	jump.1 {address: u32} => 0x5C @ address`32
-	jump.o {address: u32} => 0x5C @ address`32 ; for completeness
-	jump.t {address: u32} => 0x5C @ address`32 ; for completeness
-	jump.nz {address: u32} => 0x5D @ address`32
+	; 2-byte jumps with condition
+	
+	jump.0 {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		0x5B @ relative`8
+	}
+	jump.1 {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		0x5C @ relative`8
+	}
+	jump.nz {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		0x5D @ relative`8
+	}
+	jump.z {address} => asm { jump.0 {address} }
+	jump.o {address} => asm { jump.0 {address} }
+	jump.t {address} => asm { jump.1 {address} }
+	jump.f {address} => asm { jump.1 {address} }
 
-	jump.e  {address: u32} => 0x5E @ address`32
-	jump.ne {address: u32} => 0x5F @ address`32
+	jump.e {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		0x5E @ relative`8
+	}
+	jump.ne {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		0x5F @ relative`8
+	}
 
 	; complex jumps are not implemented:
 
-	jump.l.{ t: TYPE} {address: u32} => (0x60 + t)`8 @ address`32
-	jump.le.{t: TYPE} {address: u32} => (0x64 + t)`8 @ address`32
-	jump.ge.{t: TYPE} {address: u32} => (0x68 + t)`8 @ address`32
-	jump.g.{ t: TYPE} {address: u32} => (0x6C + t)`8 @ address`32
+	jump.l.{t: TYPE} {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		(0x60 + t)`8 @ relative`8
+	}
+	jump.le.{t: TYPE} {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		(0x64 + t)`8 @ relative`8
+	}
+	jump.ge.{t: TYPE} {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		(0x68 + t)`8 @ relative`8
+	}
+	jump.g.{t: TYPE} {address} => {
+		relative = address - $ - 1
+		assert(relative >= - 128 && relative <= 127)
+		(0x6C + t)`8 @ relative`8
+	}
 
-	compare.e  {address: u32} => 0x70 @ address`32
-	compare.ne {address: u32} => 0x71 @ address`32
+	compare.e  => 0x70
+	compare.ne => 0x71
 
-	compare.l.{ t: TYPE} {address: u32} => (0x72 + t)`8 @ address`32
-	compare.le.{t: TYPE} {address: u32} => (0x76 + t)`8 @ address`32
-	compare.ge.{t: TYPE} {address: u32} => (0x80 + t)`8 @ address`32
-	compare.g.{ t: TYPE} {address: u32} => (0x84 + t)`8 @ address`32
+	compare.l.{ t: TYPE} => (0x72 + t)`8
+	compare.le.{t: TYPE} => (0x76 + t)`8
+	compare.ge.{t: TYPE} => (0x80 + t)`8
+	compare.g.{ t: TYPE} => (0x84 + t)`8
 
-	isnan => 0x88
-	isinf => 0x89
+	isnan  => 0x88
+	is.nan => 0x88 ; for completeness
+	isinf  => 0x89
+	is.inf => 0x89 ; for completeness
 
 	; ==========================================
 
@@ -187,15 +258,15 @@
 	; ==========================================
 
 	; 2 byte arity set
-	arity {code: u8} => {
-		assert(code > 8)
-		0xA0 @ code`8
+	arity {params: u8} => {
+		assert(params > 8)
+		0xA0 @ params`8
 	}
 	; 1 byte shorthand arity set
-	arity {code: u8} => {
-		assert(code > 0)
-		assert(code < 8)
-		(0xA0 + index)`8 @ code`8
+	arity {params: u8} => {
+		assert(params > 0)
+		assert(params < 8)
+		(0xA0 + params)`8
 	}
 
 	arity 0 => 0x01 ; just in case, for completeness
@@ -222,13 +293,29 @@
 
 	; ==========================================
 
-	address {address: u32} => 0x04 @ address`32 ; equivalent to `const.d`
+	address {address} => asm { const.n {address} }
 
 	call.k {code: u8} => 0xC0 @ code`8
 	; empty instructions 0xC1 ... 0xC6
 	call.l => 0xC7
-	; empty instructions 0xC8 ... 0xC9
-	call {address: u32} => 0xCA @ address`32
+
+	call {address} => { ; 3 byte absolute call
+		assert(address >= U16_START)
+		assert(address <= U16_MAX)
+		0xC9 @ address`16
+	}
+	call {address} => { ; call overflow fix
+		assert(address > U16_MAX)
+		asm {
+			const.n {address}
+			call.l
+		}
+	}
+	call {address} => { ; 2 byte absolute call
+		assert(address >= U8_START)
+		assert(address <= U8_MAX)
+		0xCA @ address`8
+	}
 
 	return   => 0xCB ; return (Call Back) a value
 	return.v => 0xCC ; return void
@@ -282,10 +369,17 @@
 	sqrt  => 0xF4
 	tan   => 0xF5
 	tanh  => 0xF6
-	tri   => 0xF7
-	trunc => 0xF8
+	trunc => 0xF7
 
-	imaginary => 0xF9
+	; ==========================================
+
+	imaginary => 0xF8
+	combine   => 0xF9
+	project   => 0xFA
+	project.r => 0xFB
+	project.i => 0xFC
+	magnitude => 0xFD
+	conjugate => 0xFE
 
 	; ==========================================
 

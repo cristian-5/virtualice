@@ -4,9 +4,9 @@
 Stack based vm for super fast execution.
 It currently supports the following features:
 
-✅ → 64bit signed and unsigned **integers**
-✅ → 64bit **floating** point numbers
-✅ → 64bit **complex** numbers (`f32` real, `f32` imaginary)
+✅ → signed (**integers**) and unsigned (**natural**) numbers
+✅ → floating point (**real**) numbers
+✅ → **complex** numbers
 ✅ → **control flow** jump and compare instructions
 ✅ → **stack based** arithmetic operations on pure types
 ✅ → **bitwise** and **boolean** operations
@@ -21,15 +21,17 @@ It currently supports the following features:
 
 ## Architecture
 
-> ⚠️ **Attention**: Breaking Changes since last version!
+> ⚠️ **Attention**: Breaking Changes since last versions!
 
-The virtual machine is stack based.
+The virtual machine is stack based and the architecture is `ice`.
 
 The architecture is capable of handling 64bit integers, floating point and
 complex numbers. Arithmetic operations expect operands to be pushed in
-human order. Addresses are 32 bit absolute. Calls should push parameters
-on reverse on the stack, while it's the function's responsibility to tell
-the environment how many parameters it expects using the `arity` instruction.
+human order. Calls should push parameters on reverse on the stack, while
+it's the function's responsibility to tell the environment how many
+parameters it expects using the `arity` instruction. The final bytecode is
+optimized for size and sometimes even easy to read in a hex editor (for
+example the `call.k debug` instruction translates to `C0 DE`, **co**de **de**bug).
 
 ### Instruction Set
 
@@ -60,13 +62,13 @@ virtualice <n>  ; set magic number and version
 	[mod|pow].[n|i|r]
 	[inc|dec].[n|i|r] ; nat = int here
 
-	magn       ; magnitude of a complex number
-	conj       ; complex conjugate
-	comb       ; combine 2 floating numbers into a complex
-	proj       ; project complex into real and imaginary parts
-	proj.[r|i] ; project complex's real or imaginary part
+	project       ; project complex into real and imaginary parts
+	project.[r|i] ; project complex's real or imaginary part
+	magnitude     ; magnitude of a complex number
+	conjugate     ; complex conjugate
+	combine       ; combine 2 floating numbers into a complex
 
-	conv.[n2r|i2r|r2i] ; convert-cast between types
+	convert.[n2r|i2r|r2i] ; convert-cast between types
 
 ; bitwise, logical operations (on 64 bits):
 
@@ -76,13 +78,13 @@ virtualice <n>  ; set magic number and version
 	nibble.s        ; swap nibbles of a byte
 	[buffer|and|or|not|nor|nand|xor|xnor|xand]
 	[invert|complement|reverse]  ; invert, complement, reverse
-	[rotate|shift].[r|l] <n> ; shift / rotate (right, left) by n bits
+	[rotate|shift].[r|l] <n>     ; shift / rotate (right, left) by n bits
 
 ; jumps and comparisons:
 
-	jump [label]                     ; uncoditional jump
-	jump.[1|0|z|nz|t|f|e|ne]        [label] ; if (one, zero, not zero, true, false)
-	jump.[g|ge|l|le].[n|i|r] [label] ; if condition is met
+	jump [label]                        ; uncoditional jump
+	jump.[1|0|z|nz|t|f|e|ne]    [label] ; if (one, zero, not zero, true, false)
+	jump.[g|ge|l|le].[n|i|r]    [label] ; if condition is met
 	compare.[g|ge|l|le].[n|i|r] [label] ; push result of comparison
 
 ; functions, kernel, lambda calls:
@@ -126,7 +128,7 @@ The documention for these functions can be found on the
 `egamma`, `phi`, `abs`, `acos`, `acosh`, `asin`, `asinh`, `atan`,
 `atan2`, `atanh`, `cbrt`, `ceil`, `cos`, `cosh`, `exp`, `expm1`,
 `floor`, `hypot`, `log`, `log1p`, `log10`, `log2`, `max`, `min`,
-`round`, `sign`, `sin`, `sinh`, `sqrt`, `tan`, `tanh`, `tri`, `trunc`.
+`round`, `sign`, `sin`, `sinh`, `sqrt`, `tan`, `tanh`, `trunc`.
 
 ## Access Record Information
 
@@ -151,7 +153,7 @@ To call one of these you can use their name or hex code (`call.k memory_size`).
 |`50`|`memory_grow(p: u64)`                    |*Grows the memory by `p` pages.*                                      |
 |`54`|`memory_shrink(p: u64)`                  |*Shrinks the memory by `p` pages.*                                    |
 |`51`|`memory_size(): u64`                     |*Returns the memory size in bytes.*                                   |
-|`2A`|`memory_page(): u64`                     |*Returns the page size in bytes (arch. dependent, usually `4KB`).*    |
+|`2A`|`memory_page(): u64`                     |*Returns the page size in bytes (hardware dependent, usually `4KB`).*    |
 |`25`|`memory_pages(): u64`                    |*Returns the number of allotted pages.*                               |
 |`C0`|`memory_copy(d: *, s: *, n: u64)`        |*Copies `n` bytes from source `s` to destination `d`.*                |
 |`70`|`memory_load(d: *, s: u32, n: u64)`      |*Loads `n` bytes from code address `s` to destination `d`.*           |

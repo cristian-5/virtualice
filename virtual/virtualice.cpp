@@ -33,10 +33,6 @@ using namespace std;
 
 #define DECREASE stack.decrease(stack.pop().i);
 
-#define CMP_I(_) if (a.i _ b.i)
-#define CMP_F(_) if (a.f _ b.f)
-
-#define UPDATE_I(T) i = & code.data[get##T(++i)]; continue
 #define SKIP(N) i += N
 #define SKIP_NEXT(N) i += N + 1; continue
 
@@ -107,6 +103,7 @@ void vm::run(arr<u8> code) {
 	val a, b;
 	// pcg::seed((u64)time(nullptr));
 	while (true) {
+		cout << std::hex << (int) * i << endl;
 		switch (* i) {
 			case op::_halt_00: exit(0);
 			case op::_rest: break;
@@ -161,16 +158,12 @@ void vm::run(arr<u8> code) {
 			case op::_memory_s<dta::w>: POP_A storeW(memory.data + getD(++i), a.n); SKIP(4); continue;
 			case op::_memory_s<dta::d>: POP_A storeD(memory.data + getD(++i), a.n); SKIP(4); continue;
 			case op::_memory_s<dta::q>: POP_A storeQ(memory.data + getD(++i), a.n); SKIP(4); continue;
-			case op::_magnitude: POP_A PUSH({ .r = absolute(a.c) }); break;
-			case op::_conjugate: POP_A PUSH({ .c = ~ a.c }); break;
-			case op::_combine: POP_BA PUSH({ .c = { (f32)a.r, (f32)b.r } }); break;
-			case op::_project:
-				POP_A
-				PUSH({ .r = (f64)a.c.r });
-				PUSH({ .r = (f64)a.c.i });
-			break;
-			case op::_project_r: POP_A PUSH({ .r = (f64)a.c.r }); break;
-			case op::_project_i: POP_A PUSH({ .r = (f64)a.c.i }); break;
+			case     op::_rotate: POP_BA PUSH({ .n = rotate( a.n, b.i) }); break;
+			case   op::_rotate_r: POP_A  PUSH({ .n = rotateR(a.n, getB(++i)) }); break;
+			case   op::_rotate_l: POP_A  PUSH({ .n = rotateL(a.n, getB(++i)) }); break;
+			case      op::_shift: POP_BA PUSH({ .n = b.i < 0 ? (a.n >> - b.i) : (a.n << b.i) }); break;
+			case    op::_shift_r: POP_A  PUSH({ .n = a.n >> getB(++i) }); break;
+			case    op::_shift_l: POP_A  PUSH({ .n = a.n << getB(++i) }); break;
 			case op::_mask<dta::b>: PUSH(V_CAST(stack.pop(), B)); break;
 			case op::_mask<dta::w>: PUSH(V_CAST(stack.pop(), W)); break;
 			case op::_mask<dta::d>: PUSH(V_CAST(stack.pop(), D)); break;
@@ -191,28 +184,25 @@ void vm::run(arr<u8> code) {
 			case     op::_invert: POP_A PUSH({ .n = ~ a.n }); break;
 			case op::_complement: POP_A PUSH({ .i = - a.i }); break;
 			case    op::_reverse: POP_A PUSH({ .n = reverse(a.n) }); break;
-			case   op::_rotate_r: POP_A PUSH({ .n = rotateR(a.n, getB(++i)) }); break;
-			case   op::_rotate_l: POP_A PUSH({ .n = rotateL(a.n, getB(++i)) }); break;
-			case    op::_shift_r: POP_A PUSH({ .n = a.n >> getB(++i) }); break;
-			case    op::_shift_l: POP_A PUSH({ .n = a.n << getB(++i) }); break;
-			case    op::_jump: UPDATE_I(D); continue;
-			case  op::_jump_z: POP_A if (a.i == 0) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_o: POP_A if (a.i == 1) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_nz: POP_A if (a.i != 0) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_e: POP_BA if (a.n == b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_ne: POP_BA if (a.n != b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_l<typ::n>: POP_BA if (a.n <  b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_l<typ::i>: POP_BA if (a.i <  b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_l<typ::r>: POP_BA if (a.r <  b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_le<typ::n>: POP_BA if (a.n <= b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_le<typ::i>: POP_BA if (a.i <= b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_le<typ::r>: POP_BA if (a.r <= b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_ge<typ::n>: POP_BA if (a.n >= b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_ge<typ::i>: POP_BA if (a.i >= b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case op::_jump_ge<typ::r>: POP_BA if (a.r >= b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_g<typ::n>: POP_BA if (a.n >  b.n) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_g<typ::i>: POP_BA if (a.i >  b.i) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
-			case  op::_jump_g<typ::r>: POP_BA if (a.r >  b.r) { UPDATE_I(D); } else SKIP_NEXT(4); continue;
+			case  op::_jump_r: i += getB(++i); continue;
+			case  op::_jump_a: i = & code.data[stack.pop().n]; continue;
+			case  op::_jump_z: POP_A  if (a.i ==   0) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_o: POP_A  if (a.i ==   1) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_nz: POP_A  if (a.i !=   0) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_e: POP_BA if (a.n == b.n) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_ne: POP_BA if (a.n != b.n) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_l<typ::n>: POP_BA if (a.n <  b.n) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_l<typ::i>: POP_BA if (a.i <  b.i) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_l<typ::r>: POP_BA if (a.r <  b.r) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_le<typ::n>: POP_BA if (a.n <= b.n) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_le<typ::i>: POP_BA if (a.i <= b.i) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_le<typ::r>: POP_BA if (a.r <= b.r) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_ge<typ::n>: POP_BA if (a.n >= b.n) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_ge<typ::i>: POP_BA if (a.i >= b.i) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case op::_jump_ge<typ::r>: POP_BA if (a.r >= b.r) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_g<typ::n>: POP_BA if (a.n >  b.n) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_g<typ::i>: POP_BA if (a.i >  b.i) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
+			case  op::_jump_g<typ::r>: POP_BA if (a.r >  b.r) { i += getB(++i); continue; } else SKIP_NEXT(1); continue;
 			case  op::_compare_e: POP_BA PUSH({ .n = (a.n == b.n) }); break;
 			case op::_compare_ne: POP_BA PUSH({ .n = (a.n != b.n) }); break;
 			case  op::_compare_l<typ::n>: POP_BA PUSH({ .n = (a.n <  b.n) }); break;
@@ -227,8 +217,8 @@ void vm::run(arr<u8> code) {
 			case  op::_compare_g<typ::n>: POP_BA PUSH({ .n = (a.n >  b.n) }); break;
 			case  op::_compare_g<typ::i>: POP_BA PUSH({ .i = (a.i >  b.i) }); break;
 			case  op::_compare_g<typ::r>: POP_BA PUSH({ .i = (a.r >  b.r) }); break;
-			case op::_isnan: POP_A PUSH({ .n = isnan(a.r) }); break;
-			case op::_isinf: POP_A PUSH({ .n = isinf(a.r) }); break;
+			case op::_is_nan: POP_A PUSH({ .n = isnan(a.r) }); break;
+			case op::_is_inf: POP_A PUSH({ .n = isinf(a.r) }); break;
 			case op::_global_r: PUSH(stack[getB(++i)]); break;
 			case op::_global_w: stack[getB(++i)] = stack.pop(); break;
 			case op::_global_e_r: PUSH(stack[getW(++i)]); SKIP(2); continue;
@@ -293,11 +283,17 @@ void vm::run(arr<u8> code) {
 				stack.decreaseTo(fp - ARITY); // restore stack pointer
 				fp = OFP;                     // restore old frame pointer
 			continue;
-			case op::_call: // normal call (address operand):
+			case op::_call_e: // extended call (3 bytes)
 				// Access Record: | arity (8b) | OFP (24b) | RA (32b) |
-				PUSH({ .n = (fp << 32) | (u64)(i - code.data + 5) }); // push fp and ra together
+				PUSH({ .n = (fp << 32) | (u64)(i - code.data + 3) }); // push fp and ra together
 				fp = stack.size() - 1;               // set frame pointer
-				i = & code.data[getD(++i) & D_MASK]; // set instruction pointer
+				i = & code.data[getW(++i)]; // set instruction pointer
+			continue;
+			case op::_call: // normal call (2 bytes):
+				// Access Record: | arity (8b) | OFP (24b) | RA (32b) |
+				PUSH({ .n = (fp << 32) | (u64)(i - code.data + 2) }); // push fp and ra together
+				fp = stack.size() - 1;               // set frame pointer
+				i = & code.data[getB(++i)]; // set instruction pointer
 			continue;
 			case op::_call_l: // lambda call (address on the stack):
 				// Access Record: | arity (8b) | OFP (24b) | RA (32b) |
@@ -431,9 +427,18 @@ void vm::run(arr<u8> code) {
 			case op::_math<math::_sqrt>:  POP_A  PUSH({ .r = sqrt(a.r) }); break;
 			case op::_math<math::_tan>:   POP_A  PUSH({ .r = tan(a.r) }); break;
 			case op::_math<math::_tanh>:  POP_A  PUSH({ .r = tanh(a.r) }); break;
-			case op::_math<math::_tri>:   POP_A  PUSH({ .r = tri(a.r) }); break;
 			case op::_math<math::_trunc>: POP_A  PUSH({ .r = trunc(a.r) }); break;
-			case op::_math<math::_imaginary>: PUSH({ .c = { 0.0, 1.0 } }); break;
+			case op::_imaginary: PUSH({ .c = { 0.0, 1.0 } }); break;
+			case op::_combine: POP_BA PUSH({ .c = { (f32)a.r, (f32)b.r } }); break;
+			case op::_project:
+				POP_A
+				PUSH({ .r = (f64)a.c.r });
+				PUSH({ .r = (f64)a.c.i });
+			break;
+			case op::_project_r: POP_A PUSH({ .r = (f64)a.c.r }); break;
+			case op::_project_i: POP_A PUSH({ .r = (f64)a.c.i }); break;
+			case op::_magnitude: POP_A PUSH({ .r = absolute(a.c) }); break;
+			case op::_conjugate: POP_A PUSH({ .c = ~ a.c }); break;
 			case op::_halt_FF: exit(0);
 		}
 		++i;
@@ -462,10 +467,6 @@ void vm::run(arr<u8> code) {
 #undef OFP
 #undef ARITY
 
-#undef CMP_I
-#undef CMP_F
-
-#undef UPDATE_I
 #undef SKIP
 #undef SKIP_NEXT
 
