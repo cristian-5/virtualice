@@ -37,17 +37,17 @@ example the `call.k debug` instruction translates to `C0 DE`, **co**de **de**bug
 
 ``` asm
 
-virtualice <n>  ; set magic number and version
+virtualice <version>        ; set magic number and version
 
 ; halt, rest:
 
 	halt
-	rest        ; no operation
+	rest                    ; no operation
 
 ; stack operations:
 
 	const.[b|w|d|q] <value> ; push a constant (byte, word, double, quad)
-	const.[0|1|f|t|h|l] ; push 0, 1, false, true, high, low
+	const.[0|1|f|t|h|l]     ; push 0, 1, false, true, high, low
 
 	swap        ; swaps the top two stack values
 
@@ -131,6 +131,8 @@ The documention for these functions can be found on the
 `round`, `sign`, `sin`, `sinh`, `sqrt`, `tan`, `tanh`, `trunc`.
 
 ## Access Record Information
+
+The frame pointer points directly at the `AR` index.
 
 ```
 +--------+------------------------+--------------------------------+

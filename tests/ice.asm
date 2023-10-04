@@ -63,6 +63,17 @@
 	; const.r {value} => 0x05 @ value`64
 	; const.c {value} => 0x05 @ value`64
 
+	const.b 0 => asm { const.0 } ; for completeness
+	const.w 0 => asm { const.0 } ; for completeness
+	const.d 0 => asm { const.0 } ; for completeness
+	const.q 0 => asm { const.0 } ; for completeness
+	const.n 0 => asm { const.0 } ; for completeness
+	const.b 1 => asm { const.1 } ; for completeness
+	const.w 1 => asm { const.1 } ; for completeness
+	const.d 1 => asm { const.1 } ; for completeness
+	const.q 1 => asm { const.1 } ; for completeness
+	const.n 1 => asm { const.1 } ; for completeness
+
 	const.0 => 0x06
 	const.f => 0x06
 	const.l => 0x06
@@ -144,13 +155,13 @@
 	; ==========================================
 
 	jump {address} => { ; 2 byte relative jump
-		relative = address - $ - 1
-		assert(relative >= I8_MIN && relative <= I8_MAX)
+		relative = address - $
+		assert(relative >= - 128 && relative <= 127)
 		0x59 @ relative`8
 	}
 	jump {address} => { ; relative jump overflow fix
-		relative = address - $ - 1
-		assert(relative < I8_MIN || relative > I8_MAX)
+		relative = address - $
+		assert(relative < - 128 || relative > 127)
 		asm {
 			const.n {address}
 			jump
@@ -161,17 +172,17 @@
 	; 2-byte jumps with condition
 	
 	jump.0 {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		0x5B @ relative`8
 	}
 	jump.1 {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		0x5C @ relative`8
 	}
 	jump.nz {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		0x5D @ relative`8
 	}
@@ -181,12 +192,12 @@
 	jump.f {address} => asm { jump.1 {address} }
 
 	jump.e {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		0x5E @ relative`8
 	}
 	jump.ne {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		0x5F @ relative`8
 	}
@@ -194,22 +205,22 @@
 	; complex jumps are not implemented:
 
 	jump.l.{t: TYPE} {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		(0x60 + t)`8 @ relative`8
 	}
 	jump.le.{t: TYPE} {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		(0x64 + t)`8 @ relative`8
 	}
 	jump.ge.{t: TYPE} {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		(0x68 + t)`8 @ relative`8
 	}
 	jump.g.{t: TYPE} {address} => {
-		relative = address - $ - 1
+		relative = address - $
 		assert(relative >= - 128 && relative <= 127)
 		(0x6C + t)`8 @ relative`8
 	}
