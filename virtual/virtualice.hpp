@@ -141,18 +141,21 @@ class op {
 	public:
 
 	COP _halt_00 = 0x00;
-	COP _rest = 0x01;
+	COP _rest    = 0x01;
 
-	VOP _const = 0x02 + T;
+	VOP _const   = 0x02 + T;
 	COP _const_0 = 0x06;
 	COP _const_1 = 0x07;
 
-	COP _swap = 0x08;
+	COP _swap    = 0x08;
 
 	COP _clone_n = 0x0A;
 	COP _drop_n  = 0x0B;
 	COP _clone   = 0x0C;
 	COP _drop    = 0x0D;
+
+	COP _fail    = 0x0E;
+	COP _flag    = 0x0F;
 
 	// ==========================================
 
@@ -181,24 +184,24 @@ class op {
 	COP _rotate_r = 0x3E;
 	COP _rotate_l = 0x3F;
 
-	VOP _mask = 0x40 + T;
+	VOP _mask     = 0x40 + T;
 
-	COP _bit   = 0x44;
-	COP _bit_0 = 0x45;
-	COP _bit_1 = 0x46;
+	COP _bit      = 0x44;
+	COP _bit_0    = 0x45;
+	COP _bit_1    = 0x46;
 
 	COP _nibble_l = 47;
 	COP _nibble_h = 48;
 	COP _nibble_s = 49;
 
 	// buffer = rest = nop
-	COP _and  = 0x4A;
-	COP _or   = 0x4B;
-	COP _not  = 0x4C;
-	COP _nor  = 0x4D;
-	COP _nand = 0x4E;
-	COP _xor  = 0x4F;
-	COP _xnor = 0x50; // xand = xnor
+	COP _and      = 0x4A;
+	COP _or       = 0x4B;
+	COP _not      = 0x4C;
+	COP _nor      = 0x4D;
+	COP _nand     = 0x4E;
+	COP _xor      = 0x4F;
+	COP _xnor     = 0x50; // xand = xnor
 
 	COP _invert     = 0x51;
 	COP _reverse    = 0x52;
@@ -233,16 +236,16 @@ class op {
 
 	// ==========================================
 
-	COP _global_r = 0x8A;
-	COP _global_w = 0x8B;
+	COP _global_r   = 0x8A;
+	COP _global_w   = 0x8B;
 	COP _global_e_r = 0x8C;
 	COP _global_e_w = 0x8D;
 
-	COP _local_r_ = 0x8E; // _ to distinguish from _local_r
-	COP _local_w_ = 0x8F; // _ to distinguish from _local_w
+	COP _local_r_   = 0x8E; // _ to distinguish from _local_r
+	COP _local_w_   = 0x8F; // _ to distinguish from _local_w
 
-	VOP _local_r = 0x90 + T;
-	VOP _local_w = 0x98 + T;
+	VOP _local_r    = 0x90 + T;
+	VOP _local_w    = 0x98 + T;
 
 	// ==========================================
 
@@ -253,15 +256,15 @@ class op {
 	COP _param_r_ = 0xAE; // _ to distinguish from _param_r
 	COP _param_w_ = 0xAF; // _ to distinguish from _param_w
 
-	VOP _param_r = 0xB0 + T;
-	VOP _param_w = 0xB8 + T;
+	VOP _param_r  = 0xB0 + T;
+	VOP _param_w  = 0xB8 + T;
 
 	// ==========================================
 
-	COP _call_k = 0xC0;
-	COP _call_l = 0xC7;
-	COP _call_e = 0xC9; // extended call (3 bytes)
-	COP _call   = 0xCA; // 2 byte call
+	COP _call_k   = 0xC0;
+	COP _call_l   = 0xC7;
+	COP _call_e   = 0xC9; // extended call (3 bytes)
+	COP _call     = 0xCA; // 2 byte call
 
 	COP _return   = 0xCB;
 	COP _return_v = 0xCC;
@@ -304,13 +307,13 @@ class vm {
 	private:
 
 	[[gnu::always_inline]]
-	inline static u64 getQ(void * p);
+	inline static u64 loadQ(void * p);
 	[[gnu::always_inline]]
-	inline static u32 getD(void * p);
+	inline static u32 loadD(void * p);
 	[[gnu::always_inline]]
-	inline static u16 getW(void * p);
+	inline static u16 loadW(void * p);
 	[[gnu::always_inline]]
-	inline static u8  getB(void * p);
+	inline static u8  loadB(void * p);
 
 	[[gnu::always_inline]]
 	inline static void storeQ(void * p, u64 v);
@@ -320,15 +323,6 @@ class vm {
 	inline static void storeW(void * p, u16 v);
 	[[gnu::always_inline]]
 	inline static void storeB(void * p, u8  v);
-
-	[[gnu::always_inline]]
-	inline static u64 loadQ(void * p);
-	[[gnu::always_inline]]
-	inline static u32 loadD(void * p);
-	[[gnu::always_inline]]
-	inline static u16 loadW(void * p);
-	[[gnu::always_inline]]
-	inline static u8  loadB(void * p);
 
 	static mtx critical, global;
 

@@ -90,7 +90,8 @@
 	clone => 0x0C
 	drop  => 0x0D
 
-	; empty instructions 0x0E, 0x0F
+	fail => 0x0E
+	flag => 0x0F
 
 	; ==========================================
 

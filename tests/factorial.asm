@@ -1,5 +1,5 @@
 
-#include "ice.asm"
+#include "../ice.inc"
 
 virtualice 0
 
